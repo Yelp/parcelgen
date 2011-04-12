@@ -1,0 +1,36 @@
+{
+    "do_json": true,
+    "package": "com.yelp.parcelgen",
+    "json_map": {
+    	"ratingImageUrl": "rating_img_url",
+    	"ratingImageUrlSmall": "rating_img_url_small",
+    	"uri": "url",
+    	"mobileUri": "mobile_url"
+    },
+    "props": {
+    	"Uri": [
+    		"uri",
+    		"mobileUri"
+    	],
+        "String": [
+            "id",
+            "name",
+            "imageUrl",
+            "phone",
+            "displayPhone",
+            "ratingImageUrl",
+            "ratingImageUrlSmall",
+            "snippetText",
+            "snippetImageUrl"
+        ],
+        "int": [
+            "reviewCount"
+        ],
+        "double": [
+            "distance"
+        ],
+        "Location": [
+            "location"
+        ] 
+    }
+}

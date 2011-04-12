@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- Remove this comment and rename this file to api_keys.xml to use in your application
+    <string name="consumer_key">YOUR_CONSUMER_KEY</string>
+    <string name="consumer_secret">YOUR_CONSUMER_SECRET</string>
+    <string name="api_token">YOUR_TOKEN</string>
+    <string name="api_token_secret">YOUR_TOKEN_SECRET</string>
+    -->
+</resources>

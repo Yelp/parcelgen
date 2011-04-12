@@ -1,0 +1,3 @@
+v1.0.0, 2011-04-11 -- Initial release
+ * Fixed incorrect parcelling of Uri
+ * Cleaned up codez, wrote this changelog and readme

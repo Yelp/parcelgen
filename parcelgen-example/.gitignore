@@ -1,0 +1,6 @@
+gen
+bin/*
+/gen
+/bin
+/.settings
+res/values/api_keys.xml

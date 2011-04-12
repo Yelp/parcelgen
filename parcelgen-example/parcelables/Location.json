@@ -1,0 +1,27 @@
+{
+    "do_json": true,
+    "package": "com.yelp.parcelgen",
+    "json_blacklist": [
+        "latitude",
+        "longitude"
+    ],
+    "props": {
+        "double": [
+            "latitude",
+            "longitude",
+            "geoAccuracy"
+        ],
+        "List<String>": [
+            "address",
+            "displayAddress",
+            "neighborhoods"
+        ],
+        "String": [
+            "city",
+            "stateCode",
+            "postalCode",
+            "countryCode",
+            "crossStreets"
+        ]
+    }
+}

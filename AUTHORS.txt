@@ -1,0 +1,10 @@
+parcelgen 1.x
+==============================
+Primary author:
+
+* Alex Pretzlav <pretz@yelp.com>
+
+Contributors (in order of contribution, latest first):
+
+* Greg Giacovelli <greg@yelp.com> :: JSON Writer Support, bug fixes, code reviews
+* Alex Davis <alexd@yelp.com> :: Bug fixes, code reviews
