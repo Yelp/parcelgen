@@ -56,6 +56,12 @@ The magic is in the `readFromParcel()` and `readFromJson()` methods parcelgen cr
 
 When you re-run parcelgen if you change the properties of on object, parcelgen will overwrite the class beginning with an `_` but not the subclass. This allows you to add logic methods and any other custom handling to the underscoreless subclass without losing the ability to modify the object.
 
+### Add the parcelgen runtime to your Android project
+
+Parcelgen requires a small Java library with utility methods for reading and writing Parcels and JSON. [Download parcelgen.jar here](https://github.com/downloads/Yelp/parcelgen/parcelgen.jar) and put it in the `libs` directory of your Android project (if `libs` doesn't exist, create it). If you're using Eclipse, you'll also need to add the jar to your build path by right clicking on your project -> Properties -> Java Build Path -> Libraries -> Add Jar -> navigate to your project/libs/parcelgen.jar.
+
+If you'd rather add the library project directly, you can import [parcelgen-runtime](https://github.com/Yelp/parcelgen/tree/master/parcelgen-runtime) into Eclipse and add it to your project as an Android library dependency. If you do this, do not add the jar to your project.
+
 ### Pass the objects around
 
 Want to pass an object to a new activity in an Intent? Just use `Intent.putExtra()` ([BusinessesActivity.java](https://github.com/Yelp/parcelgen/blob/master/parcelgen-example/src/com/yelp/parcelgen/BusinessesActivity.java#L31)):
@@ -86,8 +92,8 @@ Further Documentation
 
 Parcelgen supports writing and reading the following types to a Parcel:
 
-* The native Java types: `byte`, `double`, `float`, `int`, `long`, `java.lang.String` directly use Parcel's [write*Type*()][parcel] methods
-* `boolean`: Parcels only support arrays of booleans, so Parcelgen will place all of the boolean properties of on object into a boolean array before writing to a Parcel, and unpack them in the same order when reading
+* The native Java types: `byte`, `double`, `float`, `int`, `long`, and `java.lang.String` directly use Parcel's [write*Type*()][parcel] methods.
+* `boolean`: Parcels only support arrays of booleans, so Parcelgen will place all of the boolean properties of on object into a boolean array before writing to a Parcel, and unpack them in the same order when reading.
 * `java.util.Date`: parcelgen stores the value returned by [Date.getTime()](http://d.android.com/reference/java/util/Date.html#getTime%28%29). When reading from JSON, Parcelgen will convert unix timestamps in seconds since epoch into Java `Date` objects.
 * Objects which implement [Serializable][serializable], as specified in the `serializables` property documented in the next section.
 * Objects which themselves implement [Parcelable][parcelable]. If parcelgen doesn't know what do with an object, it assumes the object has a CREATOR property and uses that to write and read the object from a Parcel.
