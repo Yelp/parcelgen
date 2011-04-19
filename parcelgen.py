@@ -307,6 +307,9 @@ class ParcelGen:
                     key = self.json_map[member]
                 else:
                     key = camel_to_under(member)
+                # Need to check if key is defined if we have a default value too
+                if member in self.default_values:
+                    protect = True
                 if protect:
                     fun += self.tabify("if (!json.isNull(\"%s\")) {\n" % key)
                     self.uptab()
@@ -340,9 +343,12 @@ class ParcelGen:
                             fun += "java.util.Collections.emptyList()"
                         fun += ";\n"
                         self.downtab()
-                        fun += self.tabify("}\n")
-                    else:
-                        fun += self.tabify("}\n")
+                    elif member in self.default_values:
+                        fun += self.tabify("} else {\n")
+                        self.uptab()
+                        fun += self.tabify(("%s = %s;\n" % (self.memberize(member), self.default_values[member])))
+                        self.downtab()
+                    fun += self.tabify("}\n")
         self.downtab()
         fun += self.tabify("}\n")
         return fun
@@ -402,6 +408,7 @@ def generate_class(filePath, output):
     package = description.get("package") or None
     imports = description.get("imports") or ()
     json_map = description.get("json_map") or {}
+    default_values = description.get("default_values") or {}
     do_json_writer = description.get("do_json_writer")
     json_blacklist = description.get("json_blacklist") or []
     serializables = description.get("serializables") or ()
@@ -417,6 +424,7 @@ def generate_class(filePath, output):
     generator.serializables = serializables
     generator.do_json = do_json
     generator.do_json_writer = do_json_writer
+    generator.default_values = default_values
     if output:
         if (os.path.isdir(output)): # Resolve file location based on package + path
             dirs = package.split(".")

@@ -5,6 +5,9 @@
         "latitude",
         "longitude"
     ],
+    "default_values": {
+      "geoAccuracy": -1
+    },
     "props": {
         "double": [
             "latitude",

@@ -8,8 +8,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /** Automatically generated Parcelable implementation for _Location.
- *  DO NOT MODIFY THIS FILE MANUALLY! IT WILL BE OVERWRITTEN THE NEXT TIME
- *  _Location's PARCELABLE DESCRIPTION IS CHANGED.
+ *    DO NOT MODIFY THIS FILE MANUALLY! IT WILL BE OVERWRITTEN THE NEXT TIME
+ *    _Location's PARCELABLE DESCRIPTION IS CHANGED.
  */
 /* package */ abstract class _Location implements Parcelable {
 
@@ -142,7 +142,11 @@ import org.json.JSONObject;
 		if (!json.isNull("cross_streets")) {
 			mCrossStreets = json.optString("cross_streets");
 		}
-		mGeoAccuracy = json.optDouble("geo_accuracy");
+		if (!json.isNull("geo_accuracy")) {
+			mGeoAccuracy = json.optDouble("geo_accuracy");
+		} else {
+			mGeoAccuracy = -1;
+		}
 	}
 
 }
