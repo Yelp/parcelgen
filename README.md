@@ -19,7 +19,7 @@ Create a folder called `parcelables` in the top level of your Android applicatio
 
 This is the parcelable description for (a subset of) a [Business returned by the Yelp API](http://www.yelp.com/developers/documentation/v2/search_api#rValue) as used in [the example app](https://github.com/Yelp/parcelgen/blob/master/parcelgen-example/parcelables/Business.json):
 
-``` json
+``` javascript
 {
     "do_json": true,
     "package": "com.yelp.parcelgen",
@@ -118,7 +118,8 @@ Parcelgen supports writing and reading the following types to a Parcel:
 * **json_blacklist**: A list of properties which shouldn't be read from json. Use this for properties you want to passed in Parcels but not read from json.
 * **do_json_writer**: If enabled, Parcelgen will generate code to create a `JSONObject` mirroring what would have been read from JSON. **Note that this is currently experimental**, in particular, List-type properties are not supported.
 * **default_values**: An optional dictionary containing the value certain properties should be given by default. For instance useful to defaulting integer values to -1:
-``` json
+
+``` javascript
 "default_values": {
     "geoAccuracy": -1
 }
