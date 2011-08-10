@@ -12,7 +12,7 @@ import sys, re, os.path, json
 
 class ParcelGen:
     BASE_IMPORTS = ("android.os.Parcel", "android.os.Parcelable")
-    CLASS_STR = "/* package */ abstract class %s implements Parcelable {"
+    CLASS_STR = "/* package */ abstract class %s implements %s {"
     CHILD_CLASS_STR = "public class {0} extends _{0} {{"
     NATIVE_TYPES = ["string", "byte", "double", "float", "int", "long"]
     JSON_IMPORTS = ["org.json.JSONException", "org.json.JSONObject"]
@@ -172,7 +172,7 @@ class ParcelGen:
                 return True
         return False
 
-    def print_gen(self, props, class_name, package, imports):
+    def print_gen(self, props, class_name, package, imports, transient):
         self.props = props
         self.tablevel = 0
         # Imports and open class definition
@@ -192,6 +192,8 @@ class ParcelGen:
             imports.update(self.JSON_IMPORTS)
             if self.needs_jsonutil():
                 imports.add("com.yelp.parcelgen.JsonUtil")
+        if self.make_serializable:
+            imports.add("java.io.Serializable")
         imports = list(imports)
         imports.sort()
 
@@ -203,11 +205,17 @@ class ParcelGen:
         self.printtab(" *    DO NOT MODIFY THIS FILE MANUALLY! IT WILL BE OVERWRITTEN THE NEXT TIME")
         self.printtab(" *    %s's PARCELABLE DESCRIPTION IS CHANGED." % class_name)
         self.printtab(" */")
-        self.printtab((self.CLASS_STR % class_name) + "\n")
+
+        implements = "Parcelable"
+        if self.make_serializable:
+            implements += ", Serializable"
+        self.printtab((self.CLASS_STR % (class_name, implements)) + "\n")
 
         # Protected member variables
         self.uptab()
         for typ, member in self.member_map():
+            if member in transient:
+                typ = "transient " + typ
             self.printtab("protected %s %s;" % (typ, self.memberize(member)))
         self.output("")
 
@@ -409,6 +417,8 @@ def generate_class(filePath, output):
     imports = description.get("imports") or ()
     json_map = description.get("json_map") or {}
     default_values = description.get("default_values") or {}
+    transient = description.get("transient") or []
+    make_serializable = description.get("make_serializable")
     do_json_writer = description.get("do_json_writer")
     json_blacklist = description.get("json_blacklist") or []
     serializables = description.get("serializables") or ()
@@ -424,6 +434,8 @@ def generate_class(filePath, output):
     generator.serializables = serializables
     generator.do_json = do_json
     generator.do_json_writer = do_json_writer
+    generator.make_serializable = make_serializable
+
     generator.default_values = default_values
     if output:
         if (os.path.isdir(output)): # Resolve file location based on package + path
@@ -440,7 +452,7 @@ def generate_class(filePath, output):
                     generator.outfile = open(child_file, 'w')
                     generator.print_child(child, package)
         generator.outfile = open(targetFile, 'w')
-    generator.print_gen(props, class_name, package, imports)
+    generator.print_gen(props, class_name, package, imports, transient)
 
 
 if __name__ == "__main__":
