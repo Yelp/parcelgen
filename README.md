@@ -124,6 +124,15 @@ Parcelgen supports writing and reading the following types to a Parcel:
     "geoAccuracy": -1
 }
 ```
+* **make_serializable**: Boolean indicating whether or not to mark the generated class(es) as implementing Serializable.
+* **transient**: List of fields to be marked transient (you'll probably also want to declare make_serializable):
+
+``` javascript
+"transient": {
+    "accessTime",
+    "distanceCache"
+}
+```
 
 ### Missing Features and Further Work
 
