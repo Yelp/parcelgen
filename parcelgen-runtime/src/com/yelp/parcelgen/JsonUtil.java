@@ -36,7 +36,11 @@ public class JsonUtil {
 			if (creator.getElementType() == JsonParser.ARRAY_TYPE) {
 				list.add(creator.parse(array.getJSONArray(i)));
 			} else {
-				list.add(creator.parse(array.getJSONObject(i)));
+				if(array.isNull(i)){
+					list.add(null);
+				} else {
+					list.add(creator.parse(array.getJSONObject(i)));
+				}
 			}
 		}
 		return list;
