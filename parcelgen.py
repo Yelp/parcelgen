@@ -91,7 +91,7 @@ class ParcelGen:
         classname = self.array_type(typ)
         if not classname:
             return None
-        elif classname.lower() in self.NATIVE_TYPES:
+        elif classname.lower() in self.NATIVE_TYPES + ["boolean"]:
             return self.tabify("parcel.write%sArray(%s);" % (classname.capitalize(), memberized))
         else:
             return self.tabify("parcel.writeTypedArray(%s, 0);" % memberized)
@@ -100,7 +100,7 @@ class ParcelGen:
         classname = self.array_type(typ)
         if not classname:
             return None
-        elif classname.lower() in self.NATIVE_TYPES:
+        elif classname.lower() in self.NATIVE_TYPES + ["boolean"]:
             assignment = self.tabify("%s = source.create%sArray();\n" % (memberized, classname.capitalize())) 			
             return assignment 
         else:
@@ -382,7 +382,12 @@ class ParcelGen:
                     fun += self.tabify("for (int i = 0; i < arrayLen; i++) {\n")
                     self.uptab()
                     if (classname in NATIVES): 
-                        fun += self.tabify("%s[i] = jsonArray.get%s(i);\n" % (memberized, classname.capitalize()))
+                        if (classname == "float"):
+                            fun += self.tabify("%s[i] = (float) jsonArray.getDouble(i);\n" % memberized)
+                        elif (classname == "byte"):
+                            fun += self.tabify("%s[i] = (byte) jsonArray.getInt(i);\n" % memberized)
+                        else:
+                            fun += self.tabify("%s[i] = jsonArray.get%s(i);\n" % (memberized, classname.capitalize()))
                     else:
                         fun += self.tabify("%s[i] = %s.CREATOR.parse(jsonArray.getJSONObject(i));\n" % (memberized, classname.capitalize()))
                     self.downtab()
@@ -476,6 +481,9 @@ def camel_to_under(member):
     """ Convert NamesInCamelCase to jsonic_underscore_names"""
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', member)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+def convert_byte_to_int(intName, byteName):
+    return "int %s = %s & 0xFF" % (intName, byteName)
 
 def generate_class(filePath, output):
     # Read parcelable description json
