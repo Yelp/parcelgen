@@ -373,15 +373,15 @@ class ParcelGen:
                     fun += "JsonUtil.parseTimestamp(json, \"%s\")" % key
                 elif typ == "Uri":
                     fun += "Uri.parse(json.getString(\"%s\"))" % key
-                elif self.array_type(typ):
+                elif array_type:
                     classname = self.array_type(typ)
                     memberized = self.memberize(member)
                     fun += self.tabify("JSONArray jsonArray = json.getJSONArray(\"%s\");\n" % key)
                     fun += self.tabify("int arrayLen = jsonArray.length();\n")
                     fun += self.tabify("%s = new %s[arrayLen];\n" % (memberized, classname))
-                    fun += self.tabify("for(int i = 0; i < arrayLen; i++) {\n")
+                    fun += self.tabify("for (int i = 0; i < arrayLen; i++) {\n")
                     self.uptab()
-                    if(classname in NATIVES): 
+                    if (classname in NATIVES): 
                         fun += self.tabify("%s[i] = jsonArray.get%s(i);\n" % (memberized, classname.capitalize()))
                     else:
                         fun += self.tabify("%s[i] = %s.CREATOR.parse(jsonArray.getJSONObject(i));\n" % (memberized, classname.capitalize()))
