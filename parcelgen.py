@@ -380,7 +380,7 @@ class ParcelGen:
                     fun += self.tabify("int arrayLen = jsonArray.length();\n")
                     fun += self.tabify("%s = new %s[arrayLen];\n" % (memberized, classname))
                     fun += self.tabify("for (int i = 0; i < arrayLen; i++) {\n")
-                    if (classname.lower() in NATIVES): 
+                    if (classname.lower() in NATIVES):
                         if (classname.lower() == "float"):
                             fun += self.tabify("%s[i] = (float) jsonArray.getDouble(i);\n" % memberized)
                         elif (classname.lower() == "byte"):
