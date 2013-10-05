@@ -66,7 +66,7 @@ class ParcelGen:
     def array_type(self, typ):
         match = re.match(r"(.*)(\[\])", typ)
         if match:
-            return match.group(1)
+            return match.group(1).strip()
         return None
 
     def gen_list_parcelable(self, typ, memberized):
@@ -380,11 +380,10 @@ class ParcelGen:
                     fun += self.tabify("int arrayLen = jsonArray.length();\n")
                     fun += self.tabify("%s = new %s[arrayLen];\n" % (memberized, classname))
                     fun += self.tabify("for (int i = 0; i < arrayLen; i++) {\n")
-                    self.uptab()
-                    if (classname in NATIVES): 
-                        if (classname == "float"):
+                    if (classname.lower() in NATIVES): 
+                        if (classname.lower() == "float"):
                             fun += self.tabify("%s[i] = (float) jsonArray.getDouble(i);\n" % memberized)
-                        elif (classname == "byte"):
+                        elif (classname.lower() == "byte"):
                             fun += self.tabify("%s[i] = (byte) jsonArray.getInt(i);\n" % memberized)
                         else:
                             fun += self.tabify("%s[i] = jsonArray.get%s(i);\n" % (memberized, classname.capitalize()))
@@ -458,8 +457,12 @@ class ParcelGen:
                     fun += self.tabify("JSONArray array = new JSONArray();\n")
                     fun += self.tabify("for(%s temp: %s) {\n" % (array_type, self.memberize(member)))
                     self.uptab()
-                    if(array_type in NATIVES):
-                        fun += self.tabify("array.put(temp);\n")
+                    if (array_type in NATIVES):
+                        # Correct for any siliness related to byte signage silliness
+                        if (array_type == "byte"):
+                            fun += self.tabify("array.put(temp & 0xFF);\n")
+                        else:
+                            fun += self.tabify("array.put(temp);\n")
                     else:
                         fun += self.tabify("array.put(temp.writeJSON());\n")
                     self.downtab()
@@ -481,9 +484,6 @@ def camel_to_under(member):
     """ Convert NamesInCamelCase to jsonic_underscore_names"""
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', member)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
-
-def convert_byte_to_int(intName, byteName):
-    return "int %s = %s & 0xFF" % (intName, byteName)
 
 def generate_class(filePath, output):
     # Read parcelable description json
