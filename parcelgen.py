@@ -380,6 +380,7 @@ class ParcelGen:
                     fun += self.tabify("int arrayLen = jsonArray.length();\n")
                     fun += self.tabify("%s = new %s[arrayLen];\n" % (memberized, classname))
                     fun += self.tabify("for (int i = 0; i < arrayLen; i++) {\n")
+                    self.uptab()
                     if (classname.lower() in NATIVES):
                         if (classname.lower() == "float"):
                             fun += self.tabify("%s[i] = (float) jsonArray.getDouble(i);\n" % memberized)
@@ -455,7 +456,7 @@ class ParcelGen:
                     fun += self.tabify("// TODO LIST writing %s \n" % self.memberize(member))
                 elif array_type:
                     fun += self.tabify("JSONArray array = new JSONArray();\n")
-                    fun += self.tabify("for(%s temp: %s) {\n" % (array_type, self.memberize(member)))
+                    fun += self.tabify("for (%s temp: %s) {\n" % (array_type, self.memberize(member)))
                     self.uptab()
                     if (array_type in NATIVES):
                         # Correct for any siliness related to byte signage silliness
