@@ -15,6 +15,7 @@ class ParcelGen:
     CLASS_STR = "/* package */ abstract class %s implements %s {"
     CHILD_CLASS_STR = "public class {0} extends _{0} {{"
     NATIVE_TYPES = ["string", "byte", "double", "float", "int", "long"]
+    BOX_TYPES = ["Byte", "Boolean", "Float", "Integer", "Long", "Short", "Double"]
     JSON_IMPORTS = ["org.json.JSONException", "org.json.JSONObject"]
 
     tablevel = 0
@@ -83,7 +84,9 @@ class ParcelGen:
 
     def gen_parcelable_line(self, typ, member):
         memberized = self.memberize(member)
-        if typ.lower() in self.NATIVE_TYPES:
+        if typ in self.BOX_TYPES:
+            return self.tabify("parcel.writeValue(%s);" % (memberized))
+        elif typ.lower() in self.NATIVE_TYPES:
             return self.tabify("parcel.write%s(%s);" % (typ.capitalize(), memberized))
         elif typ == "Date":
             return self.tabify("parcel.writeLong(%s == null ? Integer.MIN_VALUE : %s.getTime());" % (
@@ -278,6 +281,8 @@ class ParcelGen:
                         self.downtab()
                         self.printtab("}")
                         i += 1
+                    elif typ in self.BOX_TYPES:
+                        self.printtab("%s = (%s) source.readValue(%s.class.getClassLoader());" % (memberized, typ.capitalize(), typ.capitalize()))
                     elif typ.lower() in self.NATIVE_TYPES:
                         self.printtab("%s = source.read%s();" % (memberized, typ.capitalize()))
                     elif typ in self.serializables:
