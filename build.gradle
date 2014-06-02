@@ -1,0 +1,21 @@
+apply plugin: "android-library"
+
+android {
+    compileSdkVersion "Google Inc.:Google APIs:19"
+    buildToolsVersion "19.0.3"
+
+    buildTypes {
+        release {
+            runProguard false
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "parcelgen-runtime/proguard.cfg"
+        }
+    }
+    sourceSets {
+        main {
+            manifest.srcFile "parcelgen-runtime/AndroidManifest.xml"
+            java.srcDirs = ["parcelgen-runtime/src"]
+            resources.srcDirs = ["parcelgen-runtime/src"]
+            res.srcDirs = ["parcelgen-runtime/res"]
+        }
+    }
+}
