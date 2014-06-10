@@ -22,7 +22,7 @@ class ParcelGen:
     outfile = None
 
     def tabify(self, string):
-        return ("\t" * self.tablevel) + string
+        return ("    " * self.tablevel) + string
 
     def printtab(self, string):
         self.output(self.tabify(string))
@@ -56,7 +56,7 @@ class ParcelGen:
             method_name = member
         else:
             method_name = "get%s%s" % (member[0].capitalize(), member[1:])
-        return "\tpublic %s %s() {\n\t\t return %s;\n\t}" % (typ, method_name, self.memberize(member))
+        return "    public %s %s() {\n        return %s;\n    }\n" % (typ, method_name, self.memberize(member))
 
     def list_type(self, typ):
         match = re.match(r"(List|ArrayList)<(.*)>", typ)
@@ -148,8 +148,8 @@ class ParcelGen:
                  parcel_class, class_name))
         self.uptab()
         self.newline()
-        self.printtab("public {0}[] newArray(int size) {{\n{1}return new {0}[size];\n\t\t}}".format(
-            class_name, "\t" * (self.tablevel + 1)))
+        self.printtab("public {0}[] newArray(int size) {{\n{1}return new {0}[size];\n        }}".format(
+            class_name, "    " * (self.tablevel + 1)))
         self.newline()
         self.printtab("public %s createFromParcel(Parcel source) {" % class_name)
         self.uptab()
@@ -188,7 +188,7 @@ class ParcelGen:
             self.printtab("newInstance.readFromJson(obj);")
             self.printtab("return newInstance;")
             self.downtab()
-            self.printtab("}\n\t};\n")
+            self.printtab("}\n    };\n")
             self.downtab()
         else:
             self.print_creator(child_name, "Parcelable.Creator")
@@ -238,9 +238,9 @@ class ParcelGen:
             self.printtab("import %s;" % imp)
 
         self.output("")
-        self.printtab("/** Automatically generated Parcelable implementation for %s." % class_name)
-        self.printtab(" *    DO NOT MODIFY THIS FILE MANUALLY! IT WILL BE OVERWRITTEN THE NEXT TIME")
-        self.printtab(" *    %s's PARCELABLE DESCRIPTION IS CHANGED." % class_name)
+        self.printtab("/**\n * Automatically generated Parcelable implementation for %s." % class_name)
+        self.printtab(" * DO NOT MODIFY THIS FILE MANUALLY! IT WILL BE OVERWRITTEN THE NEXT TIME")
+        self.printtab(" * %s's PARCELABLE DESCRIPTION IS CHANGED." % class_name)
         self.printtab(" */")
 
         implements = "Parcelable"
@@ -283,7 +283,7 @@ class ParcelGen:
         self.output("\n")
 
         # Parcelable writeToParcel
-        self.printtab("public int describeContents() {\n\t\treturn 0;\n\t}")
+        self.printtab("public int describeContents() {\n        return 0;\n    }")
         self.output("")
         self.printtab("public void writeToParcel(Parcel parcel, int flags) {")
         self.uptab()
