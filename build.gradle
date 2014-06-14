@@ -1,7 +1,7 @@
 apply plugin: "android-library"
 
 android {
-    compileSdkVersion "Google Inc.:Google APIs:19"
+    compileSdkVersion 3
     buildToolsVersion "19.0.3"
 
     buildTypes {
