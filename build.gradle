@@ -1,7 +1,7 @@
-apply plugin: "android-library"
+apply plugin: "com.android.library"
 
 android {
-    compileSdkVersion 3
+    compileSdkVersion 10
     buildToolsVersion "19.1.0"
 
     sourceSets {
