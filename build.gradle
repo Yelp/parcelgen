@@ -4,6 +4,10 @@ android {
     compileSdkVersion 10
     buildToolsVersion "19.1.0"
 
+    defaultConfig {
+        minSdkVersion 4
+    }
+
     sourceSets {
         main {
             manifest.srcFile "parcelgen-runtime/AndroidManifest.xml"
