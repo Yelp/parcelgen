@@ -9,20 +9,20 @@ import sys, re, os.path, json
 
 # Primary Author: Alex Pretzlav <pretz@yelp.com>
 
-
 class ParcelGen:
     BASE_IMPORTS = ("android.os.Parcel", "android.os.Parcelable")
-    CLASS_STR = "/* package */ abstract class %s implements %s {"
+    CLASS_STR = "/* package */abstract class %s implements %s {"
     CHILD_CLASS_STR = "public class {0} extends _{0} {{"
     NATIVE_TYPES = ["string", "byte", "double", "float", "int", "long"]
     BOX_TYPES = ["Byte", "Boolean", "Float", "Integer", "Long", "Short", "Double"]
     JSON_IMPORTS = ["org.json.JSONException", "org.json.JSONObject"]
+    TAB_STR = "    "
 
     tablevel = 0
     outfile = None
 
     def tabify(self, string):
-        return ("\t" * self.tablevel) + string
+        return (self.TAB_STR * self.tablevel) + string
 
     def printtab(self, string):
         self.output(self.tabify(string))
@@ -56,7 +56,7 @@ class ParcelGen:
             method_name = member
         else:
             method_name = "get%s%s" % (member[0].capitalize(), member[1:])
-        return "\tpublic %s %s() {\n\t\t return %s;\n\t}" % (typ, method_name, self.memberize(member))
+        return "%spublic %s %s() {\n%s%sreturn %s;\n%s}" % (self.TAB_STR, typ, method_name, self.TAB_STR, self.TAB_STR, self.memberize(member), self.TAB_STR)
 
     def list_type(self, typ):
         match = re.match(r"(List|ArrayList)<(.*)>", typ)
@@ -148,8 +148,8 @@ class ParcelGen:
                  parcel_class, class_name))
         self.uptab()
         self.newline()
-        self.printtab("public {0}[] newArray(int size) {{\n{1}return new {0}[size];\n\t\t}}".format(
-            class_name, "\t" * (self.tablevel + 1)))
+        self.printtab(("public {0}[] newArray(int size) {{\n{1}return new {0}[size];\n%s%s}}" % (self.TAB_STR, self.TAB_STR)).format(
+            class_name, self.TAB_STR * (self.tablevel + 1)))
         self.newline()
         self.printtab("public %s createFromParcel(Parcel source) {" % class_name)
         self.uptab()
@@ -188,7 +188,7 @@ class ParcelGen:
             self.printtab("newInstance.readFromJson(obj);")
             self.printtab("return newInstance;")
             self.downtab()
-            self.printtab("}\n\t};\n")
+            self.printtab("}\n    };\n")
             self.downtab()
         else:
             self.print_creator(child_name, "Parcelable.Creator")
@@ -238,9 +238,9 @@ class ParcelGen:
             self.printtab("import %s;" % imp)
 
         self.output("")
-        self.printtab("/** Automatically generated Parcelable implementation for %s." % class_name)
-        self.printtab(" *    DO NOT MODIFY THIS FILE MANUALLY! IT WILL BE OVERWRITTEN THE NEXT TIME")
-        self.printtab(" *    %s's PARCELABLE DESCRIPTION IS CHANGED." % class_name)
+        self.printtab("/**\n * Automatically generated Parcelable implementation for %s. DO NOT" % class_name)
+        self.printtab(" * MODIFY THIS FILE MANUALLY! IT WILL BE OVERWRITTEN THE NEXT TIME")
+        self.printtab(" * %s's PARCELABLE DESCRIPTION IS CHANGED." % class_name)
         self.printtab(" */")
 
         implements = "Parcelable"
@@ -280,10 +280,10 @@ class ParcelGen:
         # Getters for member variables
         for typ, member in self.member_map():
             self.output(self.gen_getter(typ, member))
-        self.output("\n")
+            self.output("")
 
         # Parcelable writeToParcel
-        self.printtab("public int describeContents() {\n\t\treturn 0;\n\t}")
+        self.printtab("public int describeContents() {\n%s%sreturn 0;\n%s}" % (self.TAB_STR, self.TAB_STR, self.TAB_STR))
         self.output("")
         self.printtab("public void writeToParcel(Parcel parcel, int flags) {")
         self.uptab()
