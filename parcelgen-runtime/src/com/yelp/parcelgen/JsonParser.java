@@ -59,7 +59,7 @@ public abstract class JsonParser<E> {
 	}
 
         public JSONObject write(E object) throws JSONException{
-                return null;
+                return new JSONObject();
         }
 
 	/**
