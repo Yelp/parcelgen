@@ -1,10 +1,10 @@
 package com.yelp.parcelgen;
 
-import android.os.Parcelable;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.os.Parcelable;
 
 /**
  * A standard class for json-representable objects to extend as
@@ -57,6 +57,10 @@ public abstract class JsonParser<E> {
 			return null;
 		}
 	}
+
+        public JSONObject write(E object) throws JSONException{
+                return null;
+        }
 
 	/**
 	 * Helper abstract class for allowing the parcelable CREATOR and json CREATOR to be
