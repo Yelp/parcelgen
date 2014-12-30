@@ -452,13 +452,13 @@ class ParcelGen:
                     fun += self.tabify("if (%s != null) {\n" % self.memberize(member))
                     self.uptab()
                 if typ == "List<String>":
-                    fun += self.tabify("// TODO list writing %s\n" % self.memberize(member))
+                    fun += self.tabify("json.put(\"%s\", new JSONArray(%s));\n" % (key, self.memberize(member)))
                 elif typ == "Date":
                     fun += self.tabify("json.put(\"%s\", %s.getTime() / 1000);\n" % (key, self.memberize(member)))
                 elif typ == "Uri":
                     fun += self.tabify("json.put(\"%s\", String.valueOf(%s));\n" % (key, self.memberize(member)))
                 elif list_type:
-                    fun += self.tabify("// TODO LIST writing %s \n" % self.memberize(member))
+                    fun += self.tabify("json.put(\"%s\", JsonUtil.writeJsonList(%s, %s.CREATOR));\n" % (key, self.memberize(member), list_type))
                 elif array_type:
                     fun += self.tabify("JSONArray array = new JSONArray();\n")
                     fun += self.tabify("for (%s temp: %s) {\n" % (array_type, self.memberize(member)))

@@ -46,14 +46,15 @@ public class JsonUtil {
 		return list;
 	}
 
-	/**
-	 * If object[key] is a valid integer Unix timestamp,
-	 * returns the appropriate Date for that timestamp.
-	 * Otherwise, returns null.
-	 * @param object
-	 * @param key
-	 * @return
-	 */
+        public static <E> JSONArray writeJsonList(List<E> list, JsonParser<E> creator) throws JSONException {
+            JSONArray array = new JSONArray();
+            for (E object : list) {
+                JSONObject jsonObject = creator.write(object);
+                array.put(jsonObject);
+            }
+            return array;
+        }
+
 	public static Date parseTimestamp(JSONObject object, String key) {
 		if (object != null && !object.isNull(key)) {
 			try {
