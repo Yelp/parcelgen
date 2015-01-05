@@ -466,15 +466,15 @@ class ParcelGen:
                             fun += self.tabify("array.put(temp & 0xFF);\n")
                         else:
                             fun += self.tabify("array.put(temp);\n")
-                    elif (cur_type in NATIVES):
+                    elif cur_type in NATIVE:
                         # Correct for any siliness related to byte signage silliness
-                        if (cur_type == "byte"):
+                        if cur_type == "byte":
                             fun += self.tabify("array.put(temp & 0xFF);\n")
                         else:
                             fun += self.tabify("array.put(temp);\n")
-                    elif (cur_type == "Date"):
+                    elif cur_type == "Date":
                             fun += self.tabify("array.put(\"%s\", %s.getTime() / 1000);\n" % (cur_type, self.memberize(member)))
-                    elif (cur_type == "Uri"):
+                    elif cur_type == "Uri":
                             fun += self.tabify("array.put(\"%s\", String.valueOf(%s));\n" % (cur_type, self.memberize(member)))
                     else:
                         fun += self.tabify("array.put(temp.writeJSON());\n")
