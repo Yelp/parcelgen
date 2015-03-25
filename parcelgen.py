@@ -466,7 +466,7 @@ class ParcelGen:
                             fun += self.tabify("array.put(temp & 0xFF);\n")
                         else:
                             fun += self.tabify("array.put(temp);\n")
-                    elif cur_type in NATIVE:
+                    elif cur_type in NATIVES:
                         # Correct for any siliness related to byte signage silliness
                         if cur_type == "byte":
                             fun += self.tabify("array.put(temp & 0xFF);\n")
