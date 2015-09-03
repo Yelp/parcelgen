@@ -105,7 +105,7 @@ class ParcelGen:
             assignment = self.tabify("%s = source.create%sArray();\n" % (memberized, classname.capitalize())) 			
             return assignment 
         else:
-            assignment = self.tabify("%s = source.createTypedArray(%s.CREATOR);\n" % (memberized, classname.capitalize()))
+            assignment = self.tabify("%s = source.createTypedArray(%s.CREATOR);\n" % (memberized, classname))
             return assignment 
 
     def gen_parcelable_line(self, typ, member):
@@ -394,7 +394,7 @@ class ParcelGen:
                         else:
                             fun += self.tabify("%s[i] = jsonArray.get%s(i);\n" % (memberized, classname.capitalize()))
                     else:
-                        fun += self.tabify("%s[i] = %s.CREATOR.parse(jsonArray.getJSONObject(i));\n" % (memberized, classname.capitalize()))
+                        fun += self.tabify("%s[i] = %s.CREATOR.parse(jsonArray.getJSONObject(i));\n" % (memberized, classname))
                     self.downtab()
                     fun += self.tabify("}\n")
                 elif list_type:
