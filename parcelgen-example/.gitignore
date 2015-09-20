@@ -3,4 +3,8 @@ bin/*
 /gen
 /bin
 /.settings
+.idea/*
+gradle/*
+build/*
+.gradle/*
 res/values/api_keys.xml
