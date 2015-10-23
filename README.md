@@ -106,6 +106,7 @@ Parcelgen supports writing and reading the following types to a Parcel:
 * Objects which implement [Serializable][serializable], as specified in the `serializables` property documented in the next section.
 * Objects which themselves implement [Parcelable][parcelable]. If parcelgen doesn't know what do with an object, it assumes the object has a CREATOR property and uses that to write and read the object from a Parcel.
 * `List`s or `ArrayList`s of any of the above object types. Specify the property as a Java generic type: `List<Business>`, and parcelgen will use the above logic to read and write the contents of the list.
+* `Map`s that represent their keys as `String`s and the value as any object that implements the `Parcelable` interface. Example of how to specify it would be `Map<String, Business>`.
 * Arrays of both primitive and complex types are also supported
 
 ### Properties you can use in a parcelgen json description

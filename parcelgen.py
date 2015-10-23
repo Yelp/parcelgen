@@ -70,6 +70,13 @@ class ParcelGen:
             return match.group(1).strip()
         return None
 
+    def map_type(self, typ):
+        match = re.match(r"(Map)<(.*, .*)>", typ)
+        if match:
+            split = match.group(2).split(', ')
+            return (split[0], split[1])
+        return None
+
     def gen_list_parcelable(self, typ, memberized):
         classname = self.list_type(typ)
         if not classname:
@@ -121,6 +128,8 @@ class ParcelGen:
             return self.gen_array_parcelable(typ, memberized)
         elif self.list_type(typ):
             return self.gen_list_parcelable(typ, memberized)
+        elif self.map_type(typ):
+            return self.tabify("parcel.writeBundle(JsonUtil.toBundle(%s));" % (memberized))
         elif typ in self.serializables:
             return self.tabify("parcel.writeSerializable(%s);" % memberized)
         else:
@@ -199,7 +208,7 @@ class ParcelGen:
         if "Date" in self.props:
             return True
         for key in self.props.keys():
-            if "List" in key:
+            if "List" in key or "Map" in key:
                 return True
         return False
 
@@ -218,6 +227,9 @@ class ParcelGen:
                 imports.add("java.util.List")
             elif prop.startswith("ArrayList"):
                 imports.add("java.util.ArrayList")
+            elif prop.startswith("Map"):
+                imports.add("java.util.Map")
+                imports.add("android.support.v4.util.ArrayMap")
             elif prop == "Date":
                 imports.add("java.util.Date")
             elif prop == "Uri":
@@ -305,11 +317,14 @@ class ParcelGen:
                 for member in props[typ]:
                     memberized = self.memberize(member)
                     list_gen = self.gen_list_unparcel(typ, memberized)
+                    map_type = self.map_type(typ)
                     if list_gen:
                         self.output(list_gen)
                     elif self.array_type(typ):
                         array_gen = self.gen_array_unparcel(typ, memberized)
                         self.output(array_gen)
+                    elif map_type:
+                        self.printtab("%s = JsonUtil.fromBundle(source.readBundle(), %s.class);" % (memberized, map_type[1]))
                     elif typ == "Date":
                         self.printtab("long date%d = source.readLong();" % i)
                         self.printtab("if (date%d != Integer.MIN_VALUE) {" % i)
@@ -346,6 +361,7 @@ class ParcelGen:
         for typ in self.get_types():
             list_type = self.list_type(typ)
             array_type = self.array_type(typ)
+            map_type = self.map_type(typ)
             # Always protect strings with isNull check because JSONObject.optString()
             # returns the string "null" for null strings.    AWESOME.
             protect = typ not in [native for native in NATIVES if native != "String"]
@@ -399,6 +415,8 @@ class ParcelGen:
                     fun += self.tabify("}\n")
                 elif list_type:
                     fun += "JsonUtil.parseJsonList(json.optJSONArray(\"%s\"), %s.CREATOR)" % (key, list_type)
+                elif map_type:
+                    fun += "JsonUtil.parseJsonMap(json.getJSONObject(\"%s\"), %s.CREATOR)" % (key, map_type[1])
                 else:
                     fun += "%s.CREATOR.parse(json.getJSONObject(\"%s\"))" % (typ, key)
                 if not array_type:
@@ -436,6 +454,7 @@ class ParcelGen:
         BOXED_NATIVES = self.BOX_TYPES + ["String"]
         for typ in self.get_types():
             list_type = self.list_type(typ)
+            map_type = self.map_type(typ)
             array_type = self.array_type(typ)
             # Always protect strings with isNull check because JSONObject.optString()
             # returns the string "null" for null strings.    AWESOME.
@@ -481,6 +500,15 @@ class ParcelGen:
                     self.downtab()
                     fun += self.tabify("}\n")
                     fun += self.tabify("json.put(\"%s\", array);\n" % key)
+                elif map_type:
+                    fun += self.tabify("JSONObject object = new JSONObject();\n")
+                    fun += self.tabify("for (String key : %s.keySet()) {\n" % self.memberize(member))
+                    self.uptab()
+                    fun += self.tabify("%s value = %s.get(key);\n" % (map_type[1], self.memberize(member)))
+                    fun += self.tabify("object.put(key, value.writeJSON());\n")
+                    self.downtab()
+                    fun += self.tabify("}\n");
+                    fun += self.tabify("json.put(\"%s\", object);\n" % key)
                 elif typ in NATIVES:
                     fun += self.tabify("json.put(\"%s\", %s);\n" % (key, self.memberize(member)))
                 else:
