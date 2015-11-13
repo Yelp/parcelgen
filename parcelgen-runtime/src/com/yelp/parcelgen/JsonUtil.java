@@ -112,7 +112,7 @@ public class JsonUtil {
 
     public static Bundle toBundle(Map<String, ? extends Parcelable> input) {
         Bundle output = new Bundle();
-        for(String key : input.keySet()) {
+        for (String key : input.keySet()) {
             output.putParcelable(key, input.get(key));
         }
         return output;
