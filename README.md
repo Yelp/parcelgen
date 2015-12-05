@@ -31,10 +31,7 @@ This is the parcelable description for (a subset of) a [Business returned by the
         ],
         "int": ["reviewCount"],
         "double": ["distance"],
-        "Location": ["location"],
-        "enum": [
-            { "messageType" : ["read", "unread"] }
-        ]
+        "Location": ["location"]
     },
     "json_map": {
         "ratingImageUrl": "rating_img_url",
@@ -111,7 +108,6 @@ Parcelgen supports writing and reading the following types to a Parcel:
 * `List`s or `ArrayList`s of any of the above object types. Specify the property as a Java generic type: `List<Business>`, and parcelgen will use the above logic to read and write the contents of the list.
 * `Map`s that represent their keys as `String`s and the value as any object that implements the `Parcelable` interface. Example of how to specify it would be `Map<String, Business>`.
 * Arrays of both primitive and complex types are also supported
-* `enums` are stored to a parcel using a String representation. 
 
 ### Properties you can use in a parcelgen json description
 
@@ -139,6 +135,53 @@ Parcelgen supports writing and reading the following types to a Parcel:
     "distanceCache"
 }
 ```
+
+### Using Enums
+
+
+Parcelgen provides full support for working with enums. You can add enum fields to your models by following these steps:
+
+**1. Changes required to your .json file**
+
+* Create the enum class in any .java file you want and import it
+ 
+``` javascript
+"imports": [
+        "com.example.mypackage.MyEnum"
+    ]
+```
+* Use the **json_blacklist** field to let parcelgen know that it shouldn't parse this enum field for you, instead you'll take care of this value and transform the string object contained in your JSON into an instance of your enum.
+``` javascript
+"json_blacklist": [
+        "enumField"
+    ]
+```
+* Specify your enum field as being serializable. Parcelgen needs to know this field is serializable so that it knows how to write/read it to/from a parcel object.
+``` javascript
+"serializables": [
+        "MyEnum"
+    ]
+```
+* Include your enum in the props list
+``` javascript
+ "props":{
+        "MyEnum": [
+            "enumField"
+        ]
+    }
+```
+
+**2. Changes required to your .java file**
+
+* Now it's time to move to your .java generated files. You'll see that parcelgen created 2 Java files for you once you've run the script: ```_Model.java``` and ```Model.java```. Move to ```Model.java``` and override the ```readFromJson()``` method in order to parse the enum field that you've added.
+``` javascript
+    @Override
+    public void readFromJson(JSONObject json) throws JSONException {
+        super.readFromJson(json);
+        mEnumField = MyEnum.getField(json.getString("enum_field"));
+    }
+```
+* Provide a method inside your enum class that will convert a string into an instance of your enum. In the example above, this method is called ```getField()```.
 
 ### Missing Features and Further Work
 
