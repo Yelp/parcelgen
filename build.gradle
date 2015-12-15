@@ -1,6 +1,7 @@
 apply plugin: "com.android.library"
 
 android {
+    publishNonDefault true
     compileSdkVersion 10
     buildToolsVersion "19.1.0"
 
@@ -16,7 +17,9 @@ android {
             res.srcDirs = ["parcelgen-runtime/res"]
         }
     }
-}
-dependencies {
-    compile 'com.android.support:support-v4:23.0.1'
+
+    dependencies {
+        compile "org.apache.commons:commons-lang3:3.4"
+        compile 'com.android.support:support-v4:23.0.1'
+    }
 }

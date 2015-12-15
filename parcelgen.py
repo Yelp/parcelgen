@@ -11,18 +11,21 @@ import sys, re, os.path, json
 
 
 class ParcelGen:
-    BASE_IMPORTS = ("android.os.Parcel", "android.os.Parcelable")
+    BASE_IMPORTS = ("android.os.Parcel", "android.os.Parcelable", "org.apache.commons.lang3.builder.EqualsBuilder",
+     "org.apache.commons.lang3.builder.HashCodeBuilder", "org.apache.commons.lang3.text.WordUtils")
     CLASS_STR = "/* package */ abstract class %s implements %s {"
     CHILD_CLASS_STR = "public class {0} extends _{0} {{"
     NATIVE_TYPES = ["string", "byte", "double", "float", "int", "long"]
     BOX_TYPES = ["Byte", "Boolean", "Float", "Integer", "Long", "Short", "Double"]
     JSON_IMPORTS = ["org.json.JSONException", "org.json.JSONObject", "org.json.JSONArray"]
+    ENUM_TYPE = "enum"
 
+    enum_types = []
     tablevel = 0
     outfile = None
 
     def tabify(self, string):
-        return ("\t" * self.tablevel) + string
+        return ("    " * self.tablevel) + string
 
     def printtab(self, string):
         self.output(self.tabify(string))
@@ -56,7 +59,7 @@ class ParcelGen:
             method_name = member
         else:
             method_name = "get%s%s" % (member[0].capitalize(), member[1:])
-        return "\tpublic %s %s() {\n\t\t return %s;\n\t}" % (typ, method_name, self.memberize(member))
+        return "    public %s %s() {\n         return %s;\n    }" % (typ, method_name, self.memberize(member))
 
     def list_type(self, typ):
         match = re.match(r"(List|ArrayList)<(.*)>", typ)
@@ -157,8 +160,8 @@ class ParcelGen:
                  parcel_class, class_name))
         self.uptab()
         self.newline()
-        self.printtab("public {0}[] newArray(int size) {{\n{1}return new {0}[size];\n\t\t}}".format(
-            class_name, "\t" * (self.tablevel + 1)))
+        self.printtab("public {0}[] newArray(int size) {{\n{1}return new {0}[size];\n        }}".format(
+            class_name, "    " * (self.tablevel + 1)))
         self.newline()
         self.printtab("public %s createFromParcel(Parcel source) {" % class_name)
         self.uptab()
@@ -172,7 +175,7 @@ class ParcelGen:
             self.printtab("};\n")
             self.downtab()
 
-    def print_child(self, child_name, package):
+    def print_child(self, child_name, package, enums):
         self.tablevel = 0
         self.printtab("package %s;\n" % package)
         imports = ["android.os.Parcel"]
@@ -187,6 +190,8 @@ class ParcelGen:
         self.printtab(self.CHILD_CLASS_STR.format(child_name))
         self.newline()
         self.uptab()
+        for enum in enums:
+            self.write_enum(enum)
         if self.do_json:
             self.print_creator(child_name, "DualCreator", False)
             self.newline()
@@ -197,7 +202,7 @@ class ParcelGen:
             self.printtab("newInstance.readFromJson(obj);")
             self.printtab("return newInstance;")
             self.downtab()
-            self.printtab("}\n\t};\n")
+            self.printtab("}\n    };\n")
             self.downtab()
         else:
             self.print_creator(child_name, "Parcelable.Creator")
@@ -205,6 +210,8 @@ class ParcelGen:
         self.printtab("}")
 
     def needs_jsonutil(self):
+        if self.enum_types:
+            return True
         if "Date" in self.props:
             return True
         for key in self.props.keys():
@@ -216,12 +223,15 @@ class ParcelGen:
         if any("[]" in s for s in self.props.keys()):
             return True
 
-    def print_gen(self, props, class_name, package, imports, transient):
+    def print_gen(self, props, class_name, package, imports, transient, enums):
         self.props = props
         self.tablevel = 0
         # Imports and open class definition
         self.printtab("package %s;\n" % package)
         imports = set(tuple(imports) + self.BASE_IMPORTS)
+        for enum in enums:
+            imports.add("%s.%s.%s" % (package, class_name[1:], first_upper(enum.keys()[0])))
+            imports.add("com.yelp.android.BuildConfig")
         for prop in props.keys():
             if prop.startswith("List"):
                 imports.add("java.util.List")
@@ -234,6 +244,8 @@ class ParcelGen:
                 imports.add("java.util.Date")
             elif prop == "Uri":
                 imports.add("android.net.Uri")
+            elif self.array_type(prop):
+                imports.add("java.util.Arrays")
 
         if self.do_json:
             imports.update(self.JSON_IMPORTS)
@@ -288,6 +300,10 @@ class ParcelGen:
         self.printtab("super();")
         self.downtab()
         self.printtab("}\n")
+        
+        # Equals / Hashcode methods
+        self.output(self.build_equals(class_name))
+        self.output(self.build_hash_code(class_name))
     
         # Getters for member variables
         for typ, member in self.member_map():
@@ -295,7 +311,7 @@ class ParcelGen:
         self.output("\n")
 
         # Parcelable writeToParcel
-        self.printtab("public int describeContents() {\n\t\treturn 0;\n\t}")
+        self.printtab("public int describeContents() {\n        return 0;\n    }")
         self.output("")
         self.printtab("public void writeToParcel(Parcel parcel, int flags) {")
         self.uptab()
@@ -382,10 +398,31 @@ class ParcelGen:
                     self.uptab()
                 # we need to do some special stuff with arrays, so don't assign
                 # that right away 
-                if not array_type:
+                if not array_type and not typ in self.enum_types:
                     fun += self.tabify("%s = " % self.memberize(member))
                 if typ.lower() == "float":
                     fun += "(float)json.optDouble(\"%s\")" % key
+                elif typ in self.enum_types:
+                    fun += self.tabify("// If the JSON field is there, but the value doesn't properly map to the\n")
+                    fun += self.tabify("// Java enum we will just set it to null in production. However, in debug\n")
+                    fun += self.tabify("// we will throw an appropriate exception.\n")
+                    fun += self.tabify("try {\n")
+                    self.uptab()
+                    fun += self.tabify("%s = %s.valueOf(WordUtils.capitalizeFully(json.optString(\"%s\"),'_'));\n" % ( self.memberize(member), first_upper(member), key))
+                    self.downtab()
+                    fun += self.tabify("} catch (IllegalArgumentException exception) {\n")
+                    self.uptab()
+                    fun += self.tabify("if (BuildConfig.DEBUG) {\n")
+                    self.uptab()
+                    fun += self.tabify("throw exception;\n")
+                    self.downtab()
+                    fun += self.tabify("} else {\n")
+                    self.uptab()
+                    fun += self.tabify("%s = null;\n" % (self.memberize(member)))
+                    self.downtab()
+                    fun += self.tabify("}\n")
+                    self.downtab()
+                    fun += self.tabify("}")
                 elif typ.lower() in NATIVES:
                     fun += "json.opt%s(\"%s\")" % (typ.capitalize(), key)
                 elif typ == "List<String>":
@@ -473,6 +510,9 @@ class ParcelGen:
                     self.uptab()
                 if typ == "Date":
                     fun += self.tabify("json.put(\"%s\", %s.getTime() / 1000);\n" % (key, self.memberize(member)))
+                elif typ in self.enum_types:
+                    self.uptab()
+                    fun += self.tabify("json.put(\"%s\", %s.apiString);\n" % (key, self.memberize(member)))
                 elif typ == "Uri":
                     fun += self.tabify("json.put(\"%s\", String.valueOf(%s));\n" % (key, self.memberize(member)))
                 elif list_type or array_type:
@@ -520,11 +560,102 @@ class ParcelGen:
         self.downtab()
         fun += self.tabify("}\n")
         return fun
+        
+    def build_equals(self, class_name):
+        """ Standard equals implementation as noted at:
+            https://commons.apache.org/proper/commons-lang/javadocs/api-3.1/org/apache/commons/lang3/builder/EqualsBuilder.html
+        """
+        output = self.tabify("@Override\n")
+        output += self.tabify("public boolean equals(Object object) {\n")
+        self.uptab()
+        output += self.tabify("if (object == null) {\n")
+        self.uptab()
+        output += self.tabify("return false;\n")
+        self.downtab()
+        output += self.tabify("}\n\n")
+        output += self.tabify("if (object == this ) {\n")
+        self.uptab()
+        output += self.tabify("return true;\n")
+        self.downtab()
+        output += self.tabify("}\n\n")
+        output += self.tabify("if (object.getClass() != getClass()) {\n")
+        self.uptab()
+        output += self.tabify("return false;\n")
+        self.downtab()
+        output += self.tabify("}\n\n")
+        output += self.tabify("%s that = (%s) object;\n\n" %(class_name, class_name))
+        output += self.tabify("return new EqualsBuilder()\n")
+        self.uptab()
+        self.uptab()
+        for data_type in self.get_types():
+            for member in self.props[data_type]:
+                memberized_member = self.memberize(member)
+                output += self.tabify(".append(this.%s, that.%s)\n" % (memberized_member, memberized_member))
+        output += self.tabify(".isEquals();\n")
+        self.downtab()
+        self.downtab()
+        self.downtab()
+        output += self.tabify("}\n")
+        
+        return output
+        
+    def build_hash_code(self, class_name):
+        output = self.tabify("@Override\n")
+        output += self.tabify("public int hashCode() {\n")
+        self.uptab()
+        output += self.tabify("return new HashCodeBuilder()\n")
+        self.uptab()
+        self.uptab()
+        for data_type in self.get_types():
+            for member in self.props[data_type]:
+                output += self.tabify(".append(%s)\n" % (self.memberize(member)))
+        output += self.tabify(".toHashCode();\n")
+        self.downtab()
+        self.downtab()
+        self.downtab()
+        output += self.tabify("}\n")
+        
+        return output
+    
+        
+    def write_enum(self, enum):
+        enum_name = first_upper(enum.keys()[0])
+        self.printtab("public enum %s {" % (enum_name))
+        self.uptab()
+        for value in enum.values()[0][:-1]:
+            self.printtab("%s(\"%s\")," % (under_to_camel(value), value))
+        last_element = enum.values()[0][-1]
+        self.printtab("%s(\"%s\");\n" % (under_to_camel(last_element), last_element))
+        self.printtab("public String apiString;\n")
+        self.printtab("private %s(String apiString) {" % (enum_name))
+        self.uptab()
+        self.printtab("this.apiString = apiString;")
+        self.downtab()
+        self.printtab("}")
+        self.downtab()
+        self.printtab("}\n")
 
 def camel_to_under(member):
-    """ Convert NamesInCamelCase to jsonic_underscore_names"""
+    """Convert NamesInCamelCase to jsonic_underscore_names"""
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', member)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+def under_to_camel(member):
+    """Convert jsonic_underscore_names to NamesInCamelCase"""
+    components = member.split('_')
+    return "".join(component.title() for component in components)
+
+def first_lower(string):
+   if not string:
+      return string
+   else:
+      return string[0].lower() + string[1:]
+
+def first_upper(string):
+    if len(string) == 0:
+        return string
+    else:
+        return string[0].upper() + string[1:]
 
 def generate_class(filePath, output):
     # Read parcelable description json
@@ -538,7 +669,7 @@ def generate_class(filePath, output):
     make_serializable = description.get("make_serializable")
     do_json_writer = description.get("do_json_writer")
     json_blacklist = description.get("json_blacklist") or []
-    serializables = description.get("serializables") or ()
+    serializables = description.get("serializables") or []
     if 'do_json' in description:
         do_json = description.get("do_json")
     else:
@@ -552,6 +683,20 @@ def generate_class(filePath, output):
     generator.do_json = do_json
     generator.do_json_writer = do_json_writer
     generator.make_serializable = make_serializable
+    
+    # We treat enums differently so pull them out of the props dictionary.
+    enums = []
+    if ParcelGen.ENUM_TYPE in props:
+        enums = props[ParcelGen.ENUM_TYPE]
+        del(props[ParcelGen.ENUM_TYPE])
+    
+    # Add the enums back to properties as their own data type.
+    for enum in enums:
+        enum_member = enum.keys()[0]
+        enum_type = first_upper(enum_member)
+        serializables.append(enum_type)
+        props[enum_type] = [enum_member]
+        generator.enum_types.append(enum_type)
 
     generator.default_values = default_values
     if output:
@@ -567,9 +712,9 @@ def generate_class(filePath, output):
                 child_file = os.path.join(output, *new_dirs)
                 if not os.path.exists(child_file):
                     generator.outfile = open(child_file, 'w')
-                    generator.print_child(child, package)
+                    generator.print_child(child, package, enums)
         generator.outfile = open(targetFile, 'w')
-    generator.print_gen(props, class_name, package, imports, transient)
+    generator.print_gen(props, class_name, package, imports, transient, enums)
 
 
 if __name__ == "__main__":
