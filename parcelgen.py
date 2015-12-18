@@ -87,7 +87,7 @@ class ParcelGen:
         elif classname == "String":
             return self.tabify("parcel.writeStringList(%s);" % memberized)
         else:
-            return self.tabify("parcel.writeTypedList(%s);" % memberized)
+            return self.tabify("parcel.writeList(%s);" % memberized)
 
     def gen_list_unparcel(self, typ, memberized):
         classname = self.list_type(typ)
@@ -96,7 +96,7 @@ class ParcelGen:
         if (classname == "String"):
             return self.tabify("%s = source.createStringArrayList();" % memberized)
         else:
-            return self.tabify("%s = source.createTypedArrayList(%s.CREATOR);" % (memberized, classname))
+            return self.tabify("%s = source.readArrayList(%s.class.getClassLoader());" % (memberized, classname))
 
     def gen_array_parcelable(self, typ, memberized):
         classname = self.array_type(typ)
@@ -105,7 +105,7 @@ class ParcelGen:
         elif classname.lower() in self.NATIVE_TYPES + ["boolean"]:
             return self.tabify("parcel.write%sArray(%s);" % (classname.capitalize(), memberized))
         else:
-            return self.tabify("parcel.writeTypedArray(%s, 0);" % memberized)
+            return self.tabify("parcel.writeParcelableArray(%s, 0);" % memberized)
 
     def gen_array_unparcel(self, typ, memberized):
         classname = self.array_type(typ)
@@ -115,7 +115,7 @@ class ParcelGen:
             assignment = self.tabify("%s = source.create%sArray();\n" % (memberized, classname.capitalize())) 			
             return assignment 
         else:
-            assignment = self.tabify("%s = source.createTypedArray(%s.CREATOR);\n" % (memberized, classname))
+            assignment = self.tabify("%s = source.readParcelableArray(%s.class.getClassLoader());\n" % (memberized, classname))
             return assignment 
 
     def gen_parcelable_line(self, typ, member):
