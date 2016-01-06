@@ -573,7 +573,7 @@ class ParcelGen:
         output += self.tabify("return false;\n")
         self.downtab()
         output += self.tabify("}\n\n")
-        output += self.tabify("if (object == this ) {\n")
+        output += self.tabify("if (object == this) {\n")
         self.uptab()
         output += self.tabify("return true;\n")
         self.downtab()
