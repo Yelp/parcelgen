@@ -231,7 +231,6 @@ class ParcelGen:
         imports = set(tuple(imports) + self.BASE_IMPORTS)
         for enum in enums:
             imports.add("%s.%s.%s" % (package, class_name[1:], first_upper(enum.keys()[0])))
-            imports.add("com.yelp.android.BuildConfig")
         for prop in props.keys():
             if prop.startswith("List"):
                 imports.add("java.util.List")
@@ -403,26 +402,7 @@ class ParcelGen:
                 if typ.lower() == "float":
                     fun += "(float)json.optDouble(\"%s\")" % key
                 elif typ in self.enum_types:
-                    fun += self.tabify("// If the JSON field is there, but the value doesn't properly map to the\n")
-                    fun += self.tabify("// Java enum we will just set it to null in production. However, in debug\n")
-                    fun += self.tabify("// we will throw an appropriate exception.\n")
-                    fun += self.tabify("try {\n")
-                    self.uptab()
-                    fun += self.tabify("%s = %s.valueOf(WordUtils.capitalizeFully(json.optString(\"%s\"),'_'));\n" % ( self.memberize(member), first_upper(member), key))
-                    self.downtab()
-                    fun += self.tabify("} catch (IllegalArgumentException exception) {\n")
-                    self.uptab()
-                    fun += self.tabify("if (BuildConfig.DEBUG) {\n")
-                    self.uptab()
-                    fun += self.tabify("throw exception;\n")
-                    self.downtab()
-                    fun += self.tabify("} else {\n")
-                    self.uptab()
-                    fun += self.tabify("%s = null;\n" % (self.memberize(member)))
-                    self.downtab()
-                    fun += self.tabify("}\n")
-                    self.downtab()
-                    fun += self.tabify("}")
+                    fun += self.tabify("%s = %s.fromApiString(json.optString(\"%s\"))" % (self.memberize(member), first_upper(member), key))
                 elif typ.lower() in NATIVES:
                     fun += "json.opt%s(\"%s\")" % (typ.capitalize(), key)
                 elif typ == "List<String>":
@@ -549,7 +529,7 @@ class ParcelGen:
                     self.downtab()
                     fun += self.tabify("}\n");
                     fun += self.tabify("json.put(\"%s\", object);\n" % key)
-                elif typ in NATIVES:
+                elif typ.lower() in NATIVES:
                     fun += self.tabify("json.put(\"%s\", %s);\n" % (key, self.memberize(member)))
                 else:
                     fun += self.tabify("json.put(\"%s\", %s.writeJSON());\n" % (key, self.memberize(member)))
@@ -623,7 +603,7 @@ class ParcelGen:
         self.printtab("public enum %s {" % (enum_name))
         self.uptab()
         for value in enum.values()[0][:-1]:
-            self.printtab("%s(\"%s\")," % (under_to_camel(value), value))
+            self.printtab("%s(\"%s\")," % (value.upper(), value))
         last_element = enum.values()[0][-1]
         self.printtab("%s(\"%s\");\n" % (under_to_camel(last_element), last_element))
         self.printtab("public String apiString;\n")
@@ -631,7 +611,21 @@ class ParcelGen:
         self.uptab()
         self.printtab("this.apiString = apiString;")
         self.downtab()
+        self.printtab("}\n")
+        self.printtab("public static %s fromApiString(String apiString) {" % (enum_name))
+        self.uptab()
+        self.printtab("for (%s %s : %s.values()) {" % (enum_name, first_lower(enum_name), enum_name))
+        self.uptab()
+        self.printtab("if (%s.apiString.equals(apiString)) {" % (first_lower(enum_name)))
+        self.uptab()
+        self.printtab("return %s;" % (first_lower(enum_name)))
+        self.downtab()
         self.printtab("}")
+        self.downtab()
+        self.printtab("}")
+        self.printtab("return null;")
+        self.downtab()
+        self.printtab("}\n")
         self.downtab()
         self.printtab("}\n")
 
