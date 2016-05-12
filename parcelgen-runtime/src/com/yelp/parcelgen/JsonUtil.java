@@ -31,7 +31,7 @@ public class JsonUtil {
     public static <T extends Parcelable> ArrayList<T> parseJsonList(JSONArray array, JsonParser<T> creator)
             throws JSONException {
         if (array == null) {
-            return null;
+            return new ArrayList<T>();
         }
         int size = array.length();
         ArrayList<T> list = new ArrayList<T>(size);
@@ -52,7 +52,7 @@ public class JsonUtil {
     public static List<Boolean> parseBooleanJsonList(JSONArray array)
             throws JSONException {
         if (array == null) {
-            return null;
+            return new ArrayList<Boolean>();
         }
 
         int size = array.length();
@@ -67,7 +67,7 @@ public class JsonUtil {
     public static List<Double> parseDoubleJsonList(JSONArray array)
             throws JSONException {
         if (array == null) {
-            return null;
+            return new ArrayList<Double>();
         }
 
         int size = array.length();
@@ -82,7 +82,7 @@ public class JsonUtil {
     public static List<Integer> parseIntegerJsonList(JSONArray array)
             throws JSONException {
         if (array == null) {
-            return null;
+            return new ArrayList<Integer>();
         }
 
         int size = array.length();
@@ -97,7 +97,7 @@ public class JsonUtil {
     public static List<Long> parseLongJsonList(JSONArray array)
             throws JSONException {
         if (array == null) {
-            return null;
+            return new ArrayList<Long>();
         }
 
         int size = array.length();
