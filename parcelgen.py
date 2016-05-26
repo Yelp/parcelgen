@@ -354,7 +354,7 @@ class ParcelGen:
                         if map_type[1] in self.BOX_TYPES:
                             self.printtab("%s = source.readHashMap(%s.class.getClassLoader());" % (memberized, map_type[1]))
                         else:
-                            self.printtab("%s = JsonUtil.fromBundle(source.readBundle(), %s.class);" % (memberized, map_type[1]))
+                            self.printtab("%s = JsonUtil.fromBundle(source.readBundle(getClass().getClassLoader()), %s.class);" % (memberized, map_type[1]))
                     elif typ == "Date":
                         self.printtab("long date%d = source.readLong();" % i)
                         self.printtab("if (date%d != Integer.MIN_VALUE) {" % i)
