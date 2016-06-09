@@ -55,7 +55,7 @@ class ParcelGen:
 
     def gen_getter(self, typ, member):
         method_name = ""
-        if typ == "boolean" and member.startswith("is"):
+        if typ == "boolean" and (member.startswith("is") or member.startswith("has")):
             method_name = member
         else:
             method_name = "get%s%s" % (member[0].capitalize(), member[1:])
