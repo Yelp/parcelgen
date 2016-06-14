@@ -118,7 +118,11 @@ class ParcelGen:
             return assignment
         elif classname in self.BOX_TYPES:
             assignment = self.tabify("Object[] %sObjArray = source.readArray(%s.class.getClassLoader());\n" % (memberized, classname))
+            assignment += self.tabify("if (%sObjArray != null) {\n" % (memberized))
+            self.uptab()
             assignment += self.tabify("%s = Arrays.copyOf(%sObjArray, %sObjArray.length, %s[].class);\n" % (memberized, memberized, memberized, classname))
+            self.downtab()
+            assignment += self.tabify("}\n")
             return assignment
         else:
             assignment = self.tabify("%s = source.createTypedArray(%s.CREATOR);\n" % (memberized, classname))
