@@ -107,7 +107,7 @@ class ParcelGen:
         elif classname in self.BOX_TYPES:
             return self.tabify("parcel.writeArray(%s);" % (memberized))
         else:
-            return self.tabify("parcel.writeParcelableArray(%s, 0);" % memberized)
+            return self.tabify("parcel.writeTypedArray(%s, 0);" % memberized)
 
     def gen_array_unparcel(self, typ, memberized):
         classname = self.array_type(typ)
@@ -121,7 +121,7 @@ class ParcelGen:
             assignment += self.tabify("%s = Arrays.copyOf(%sObjArray, %sObjArray.length, %s[].class);\n" % (memberized, memberized, memberized, classname))
             return assignment
         else:
-            assignment = self.tabify("%s = (%s[]) source.readParcelableArray(%s.class.getClassLoader());\n" % (memberized, classname, classname))
+            assignment = self.tabify("%s = source.createTypedArray(%s.CREATOR);\n" % (memberized, classname))
             return assignment
 
     def gen_parcelable_line(self, typ, member):
@@ -258,7 +258,7 @@ class ParcelGen:
             elif self.array_type(prop):
                 imports.add("java.util.Arrays")
 
-        if self.do_json:
+        if self.do_json or self.do_json_writer:
             imports.update(self.JSON_IMPORTS)
             if self.needs_jsonutil():
                 imports.add("com.yelp.parcelgen.JsonUtil")
