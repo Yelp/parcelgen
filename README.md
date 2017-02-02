@@ -119,6 +119,7 @@ Parcelgen supports writing and reading the following types to a Parcel:
 * **package**: The Java package where the generated class should be placed
 * **imports**: Additional classes to import, in case a member's type is not in the same package as the object being described. Note that parcelgen handles importing the correct classes for any types officialy supported (such as `Date` and `Uri`).
 * **serializables**: A list of any properties which should be read and written using [Serializable][serializable]. Since parcelgen doesn't inspect the Java files, it can't tell whether a class is Serializable or Parcelable.
+* **extends**: A single classname that the generated class will extend from. Note that the super class has to be in the same package, or should be imported through the **imports** tag.
 * **do_json**: Whether to generate the code to read this class from json. Leave this out or set it to false if you won't be using parcelgen's json reading/writing features.
 * **json_map**: A dictionary of instance variable to json property for properties that parcelgen cannot guess, such as `{"dateCreated": "time_created"}`.
 * **json_blacklist**: A list of properties which shouldn't be read from json. Use this for properties you want to passed in Parcels but not read from json.
