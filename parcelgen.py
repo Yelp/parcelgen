@@ -13,7 +13,7 @@ import sys, re, os.path, json
 class ParcelGen:
     BASE_IMPORTS = ("android.os.Parcel", "android.os.Parcelable", "org.apache.commons.lang3.builder.EqualsBuilder",
      "org.apache.commons.lang3.builder.HashCodeBuilder")
-    CLASS_STR = "/* package */ abstract class %s implements %s {"
+    CLASS_STR = "/* package */ abstract class %s%s implements %s {"
     CHILD_CLASS_STR = "public class {0} extends _{0} {{"
     NATIVE_TYPES = ["double", "int", "long", "boolean"]
     BOX_TYPES = ["Boolean", "Integer", "Long", "String", "Double"]
@@ -285,7 +285,10 @@ class ParcelGen:
         implements = "Parcelable"
         if self.make_serializable:
             implements += ", Serializable"
-        self.printtab((self.CLASS_STR % (class_name, implements)) + "\n")
+        extends = ""
+        if self.extends_class:
+                extends += " extends " + self.extends_class
+        self.printtab((self.CLASS_STR % (class_name, extends, implements)) + "\n")
 
         # Protected member variables
         self.uptab()
@@ -696,6 +699,7 @@ def generate_class(filePath, output):
     description = json.load(open(filePath, 'r'))
     props = description.get("props") or {}
     package = description.get("package") or None
+    extends_class = description.get("extends") or None
     imports = description.get("imports") or ()
     json_map = description.get("json_map") or {}
     default_values = description.get("default_values") or {}
@@ -717,6 +721,7 @@ def generate_class(filePath, output):
     generator.do_json = do_json
     generator.do_json_writer = do_json_writer
     generator.make_serializable = make_serializable
+    generator.extends_class = extends_class
     
     # We treat enums differently so pull them out of the props dictionary.
     enums = []
