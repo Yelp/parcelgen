@@ -7,7 +7,7 @@ apply plugin: "com.android.library"
 android {
     publishNonDefault true
     compileSdkVersion 15
-    buildToolsVersion "19.1.0"
+    buildToolsVersion "25.0.2"
 
     defaultConfig {
         minSdkVersion 15
