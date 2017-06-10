@@ -147,16 +147,16 @@ public class JsonUtil {
     }
 
     /**
-     * @return An ArrayList of the elements of array converted to strings, or the empty list if
+     * @return An mutable ArrayList of the elements of array converted to strings, or the empty list if
      * array is null. Empty strings in the input array are preserved.
      */
     public static List<String> getStringList(JSONArray array) {
         String[] stringArray = getStringArray(array);
         if (stringArray == null) {
-            return Collections.emptyList();
+            return new ArrayList<String>();
         }
 
-        return Arrays.asList(stringArray);
+        return new ArrayList<String>(Arrays.asList(stringArray));
     }
 
     public static <T extends Parcelable> Map<String, T> parseJsonMap(JSONObject object,
