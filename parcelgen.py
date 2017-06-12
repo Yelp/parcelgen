@@ -17,6 +17,7 @@ class ParcelGen:
     CHILD_CLASS_STR = "public class {0} extends _{0} {{"
     NATIVE_TYPES = ["double", "int", "long", "boolean"]
     BOX_TYPES = ["Boolean", "Integer", "Long", "String", "Double"]
+    NAN_TYPES = ["double", "Double"]
     JSON_IMPORTS = ["org.json.JSONException", "org.json.JSONObject"]
     ENUM_TYPE = "enum"
 
@@ -536,7 +537,7 @@ class ParcelGen:
                 elif list_type or array_type:
                     fun += self.tabify("JSONArray array = new JSONArray();\n")
                     cur_type = array_type if array_type else list_type
-                    fun += self.tabify("for (%s temp: %s) {\n" % (cur_type, self.memberize(member)))
+                    fun += self.tabify("for (%s temp : %s) {\n" % (cur_type, self.memberize(member)))
                     self.uptab()
                     if cur_type in self.BOX_TYPES:
                         if cur_type == "Byte":
@@ -570,6 +571,12 @@ class ParcelGen:
                     self.downtab()
                     fun += self.tabify("}\n");
                     fun += self.tabify("json.put(\"%s\", object);\n" % key)
+                elif typ in self.NAN_TYPES:
+                    fun += self.tabify("if (!Double.isNaN(%s)) {\n" % self.memberize(member))
+                    self.uptab()
+                    fun += self.tabify("json.put(\"%s\", %s);\n" % (key, self.memberize(member)))
+                    self.downtab()
+                    fun += self.tabify("}\n")
                 elif typ in self.NATIVE_TYPES:
                     fun += self.tabify("json.put(\"%s\", %s);\n" % (key, self.memberize(member)))
                 elif typ in self.BOX_TYPES:
