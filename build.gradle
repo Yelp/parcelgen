@@ -6,7 +6,7 @@ apply plugin: "com.android.library"
 
 android {
     publishNonDefault true
-    compileSdkVersion 15
+    compileSdkVersion 25
     buildToolsVersion "25.0.2"
 
     defaultConfig {
