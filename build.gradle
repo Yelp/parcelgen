@@ -6,7 +6,7 @@ apply plugin: "com.android.library"
 
 android {
     publishNonDefault true
-    compileSdkVersion 25
+    compileSdkVersion 26
     buildToolsVersion "26.0.2"
 
     defaultConfig {
@@ -24,6 +24,6 @@ android {
 
     dependencies {
         compile "org.apache.commons:commons-lang3:3.4"
-        compile 'com.android.support:support-v4:23.0.1'
+        compile 'com.android.support:support-v4:26.0.2'
     }
 }
