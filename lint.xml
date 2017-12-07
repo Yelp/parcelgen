@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <lint>
     <issue id="GradleDependency" severity="ignore" />
-    <issue id="GradleCompatible" severity="ignore" />
 </lint>
