@@ -1,18 +1,19 @@
 buildscript {
     repositories {
+        google()
         jcenter()
+        mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0'
+        classpath 'com.android.tools.build:gradle:3.1.0'
     }
 }
 
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "26.0.2"
+    compileSdkVersion 27
 
     defaultConfig {
         applicationId "com.yelp.parcelgen"
@@ -32,6 +33,6 @@ android {
     }
 
     dependencies {
-        compile fileTree(dir: "libs", include: ["*.jar"])
+        implementation fileTree(dir: "libs", include: ["*.jar"])
     }
 }
