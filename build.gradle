@@ -1,4 +1,18 @@
+buildscript {
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.1.0'
+    }
+}
+
 repositories {
+    google()
+    jcenter()
     mavenCentral()
 }
 
@@ -6,8 +20,7 @@ apply plugin: "com.android.library"
 
 android {
     publishNonDefault true
-    compileSdkVersion 26
-    buildToolsVersion "26.0.2"
+    compileSdkVersion 27
 
     defaultConfig {
         minSdkVersion 15
@@ -23,7 +36,7 @@ android {
     }
 
     dependencies {
-        compile "org.apache.commons:commons-lang3:3.4"
-        compile 'com.android.support:support-v4:26.0.2'
+        api "org.apache.commons:commons-lang3:3.7"
+        implementation 'com.android.support:support-v4:27.1.0'
     }
 }
