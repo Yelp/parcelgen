@@ -10,7 +10,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -170,6 +169,17 @@ public class JsonUtil {
         return map;
     }
 
+    public static <T extends Parcelable> Map<String, Map<String, T>> parseTwoLevelJsonMap(
+            JSONObject object, JsonParser<T> creator) throws JSONException {
+        Map<String, Map<String, T>> nestedMap = new ArrayMap<String, Map<String, T>>();
+        Iterator<String> keys = object.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            nestedMap.put(key, parseJsonMap((JSONObject)object.get(key), creator));
+        }
+        return nestedMap;
+    }
+
     public static Map<String, Boolean> parseBooleanJsonMap(JSONObject object)
             throws JSONException {
         Map<String, Boolean> map = new ArrayMap<String, Boolean>();
@@ -233,11 +243,29 @@ public class JsonUtil {
         return output;
     }
 
+    public static <T extends Parcelable> Bundle toBundleTwoLevel(Map<String, Map<String, T>> input) {
+        Bundle output = new Bundle();
+        for (String key : input.keySet()) {
+            output.putParcelable(key, toBundle(input.get(key)));
+        }
+        return output;
+    }
+
     public static <T> Map<String, T> fromBundle(Bundle input, Class<T> claz) {
         input.setClassLoader(claz.getClassLoader());
         Map<String, T> output = new ArrayMap<String, T>();
         for(String key : input.keySet()) {
             output.put(key, (T) input.get(key));
+        }
+        return output;
+    }
+
+    public static <T> Map<String, Map<String, T>> fromBundleTwoLevel(Bundle input, Class<T> claz) {
+        input.setClassLoader(claz.getClassLoader());
+        Map<String, Map<String, T>> output = new ArrayMap<>();
+        for (String key : input.keySet()) {
+            Bundle bundle = (Bundle)input.get(key);
+            output.put(key, fromBundle(bundle, claz));
         }
         return output;
     }
