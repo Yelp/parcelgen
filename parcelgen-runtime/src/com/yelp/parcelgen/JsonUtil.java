@@ -169,6 +169,10 @@ public class JsonUtil {
         return map;
     }
 
+    /**
+     * @return A nested two level Map of the elements contained in object.
+     * The creator is used to parse template T. 
+     */
     public static <T extends Parcelable> Map<String, Map<String, T>> parseTwoLevelJsonMap(
             JSONObject object, JsonParser<T> creator) throws JSONException {
         Map<String, Map<String, T>> nestedMap = new ArrayMap<String, Map<String, T>>();
@@ -243,6 +247,10 @@ public class JsonUtil {
         return output;
     }
 
+    /**
+     * Converts a two level nested map to a Bundle using toBundle as a helper
+     * method.
+     */
     public static <T extends Parcelable> Bundle toBundleTwoLevel(Map<String, Map<String, T>> input) {
         Bundle output = new Bundle();
         for (String key : input.keySet()) {
@@ -260,6 +268,10 @@ public class JsonUtil {
         return output;
     }
 
+    /**
+     * Takes a Bundle of Bundles as input and outputs a two level nested map
+     * of input.  Utilizes fromBundle as a helper.
+     */
     public static <T> Map<String, Map<String, T>> fromBundleTwoLevel(Bundle input, Class<T> claz) {
         input.setClassLoader(claz.getClassLoader());
         Map<String, Map<String, T>> output = new ArrayMap<>();
