@@ -77,7 +77,7 @@ class ParcelGen:
     def map_type(self, typ):
         match = re.match(r"(Map)<(.*, .*)>", typ)
         if match:
-            split = match.group(2).split(', ')
+            split = match.group(2).split(', ', 1)
             return (split[0], split[1])
         return None
 
@@ -143,8 +143,11 @@ class ParcelGen:
         elif self.list_type(typ):
             return self.gen_list_parcelable(typ, memberized)
         elif self.map_type(typ):
-            if self.map_type(typ)[1] in self.BOX_TYPES:
+            map_type = self.map_type(typ)
+            if map_type[1] in self.BOX_TYPES:
                 return self.tabify("parcel.writeMap(%s);" % (memberized))
+            elif self.map_type(map_type[1]):
+                return self.tabify("parcel.writeBundle(JsonUtil.toBundleTwoLevel(%s));" % (memberized))
             else:
                 return self.tabify("parcel.writeBundle(JsonUtil.toBundle(%s));" % (memberized))
         elif typ in self.serializables:
@@ -361,6 +364,9 @@ class ParcelGen:
                     elif map_type:
                         if map_type[1] in self.BOX_TYPES:
                             self.printtab("%s = source.readHashMap(%s.class.getClassLoader());" % (memberized, map_type[1]))
+                        elif self.map_type(map_type[1]):
+                            sub_map_type = self.map_type(map_type[1])
+                            self.printtab("%s = JsonUtil.fromBundleTwoLevel(source.readBundle(getClass().getClassLoader()), %s.class);" % (memberized, sub_map_type[1]))
                         else:
                             self.printtab("%s = JsonUtil.fromBundle(source.readBundle(getClass().getClassLoader()), %s.class);" % (memberized, map_type[1]))
                     elif typ == "Date":
@@ -467,6 +473,9 @@ class ParcelGen:
                         fun += self.tabify("%s = JsonUtil.parseLongJsonMap(json.getJSONObject(\"%s\"));\n" % (self.memberize(member), key))
                     elif map_type[1] == "String":
                         fun += self.tabify("%s = JsonUtil.parseStringJsonMap(json.getJSONObject(\"%s\"));\n" % (self.memberize(member), key))
+                    elif self.map_type(map_type[1]):
+                        sub_map_type = self.map_type(map_type[1])
+                        fun += self.tabify("%s = JsonUtil.parseTwoLevelJsonMap(json.getJSONObject(\"%s\"), %s.CREATOR);\n" % (self.memberize(member), key, sub_map_type[1]))
                     else:
                         fun += self.tabify("%s = JsonUtil.parseJsonMap(json.getJSONObject(\"%s\"), %s.CREATOR);\n" % (self.memberize(member), key, map_type[1]))
                 elif typ in self.NATIVE_TYPES:
