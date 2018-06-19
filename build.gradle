@@ -19,7 +19,6 @@ repositories {
 apply plugin: "com.android.library"
 
 android {
-    publishNonDefault true
     compileSdkVersion 27
 
     defaultConfig {
