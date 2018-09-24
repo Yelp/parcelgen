@@ -772,23 +772,23 @@ def generate_class(filePath, output):
     generator.print_gen(props, class_name, package, imports, transient, enums)
 
 
-if __name__ == "__main__":
+def main(argv):
     usage = """USAGE: %s parcelfile [destination]
 
-Generates a parcelable Java implementation for provided description file.
-Writes to stdout unless destination is specified.
+    Generates a parcelable Java implementation for provided description file.
+    Writes to stdout unless destination is specified.
 
-If destination is a directory, it is assumed to be the top level
-directory of your Java source. Your class file will be written in the
-appropriate folder based on its Java package.
-If destination is a file, your class will be written to that file."""
+    If destination is a directory, it is assumed to be the top level
+    directory of your Java source. Your class file will be written in the
+    appropriate folder based on its Java package.
+    If destination is a file, your class will be written to that file."""
     if len(sys.argv) < 2:
-        print(usage % sys.argv[0])
+        print(usage % argv[0])
         exit(0)
     destination = None
     if len(sys.argv) > 2:
-        destination = sys.argv[2]
-    source = sys.argv[1]
+        destination = argv[2]
+    source = argv[1]
     # If both source and destination are directories, run in
     # fake make mode
     if (os.path.isdir(source) and os.path.isdir(destination)):
@@ -796,5 +796,8 @@ If destination is a file, your class will be written to that file."""
             print "decoding ", sourcefile
             generate_class(os.path.join(source, sourcefile), destination)
     else:
-        generate_class(sys.argv[1], destination)
+        generate_class(argv[1], destination)
 
+
+if __name__ == "__main__":
+    main(sys.argv)
