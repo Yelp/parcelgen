@@ -1,18 +1,29 @@
 #!/usr/bin/env python
+"""
+Parcelgen generates parcelable Java classes based
+on a json dictionary of types and properties.  It generates
+a class with the appropriate members and working
+writeToParcel and readFromParcel methods.
 
-import sys, re, os.path, json
+Primary Author: Alex Pretzlav <pretz@yelp.com>
+"""
 
-# Parcelgen generates parcelable Java classes based
-# on a json dictionary of types and properties.  It generates
-# a class with the appropriate members and working
-# writeToParcel and readFromParcel methods.
+import sys
+import re
+import os.path
+import json
 
-# Primary Author: Alex Pretzlav <pretz@yelp.com>
+from argparse import ArgumentParser
+from glob import iglob
 
 
-class ParcelGen:
-    BASE_IMPORTS = ("android.os.Parcel", "android.os.Parcelable", "org.apache.commons.lang3.builder.EqualsBuilder",
-     "org.apache.commons.lang3.builder.HashCodeBuilder")
+class ParcelGen(object):
+    BASE_IMPORTS = (
+        "android.os.Parcel",
+        "android.os.Parcelable",
+        "org.apache.commons.lang3.builder.EqualsBuilder",
+        "org.apache.commons.lang3.builder.HashCodeBuilder",
+    )
     CLASS_STR = "/* package */ abstract class %s%s implements %s {"
     CHILD_CLASS_STR = "public class {0} extends _{0} {{"
     NATIVE_TYPES = ["double", "int", "long", "boolean"]
@@ -32,7 +43,7 @@ class ParcelGen:
         self.output(self.tabify(string))
 
     def newline(self, count=1):
-        self.output("\n" * (count-1))
+        self.output("\n" * (count - 1))
 
     def output(self, string=""):
         if self.outfile:
@@ -67,7 +78,7 @@ class ParcelGen:
         if match:
             return match.group(2)
         return None
-    
+
     def array_type(self, typ):
         match = re.match(r"(.*)(\[\])", typ)
         if match:
@@ -94,7 +105,7 @@ class ParcelGen:
         classname = self.list_type(typ)
         if not classname:
             return None
-        if (classname == "String"):
+        if classname == "String":
             return self.tabify("%s = source.createStringArrayList();" % memberized)
         else:
             return self.tabify("%s = source.readArrayList(%s.class.getClassLoader());" % (memberized, classname))
@@ -169,16 +180,14 @@ class ParcelGen:
             else:
                 for member in self.props[typ]:
                     result += self.gen_parcelable_line(typ, member) + "\n"
-        return result[:-1] # Strip last newline because I'm too lazy to do this right
+        return result[:-1]  # Strip last newline because I'm too lazy to do this right
 
     def print_creator(self, class_name, parcel_class, close=True):
         # Simple parcelable creator that uses readFromParcel
-        self.printtab("public static final {0}<{1}> CREATOR = new {0}<{1}>() {{".format(
-                 parcel_class, class_name))
+        self.printtab("public static final {0}<{1}> CREATOR = new {0}<{1}>() {{".format(parcel_class, class_name))
         self.uptab()
         self.newline()
-        self.printtab("public {0}[] newArray(int size) {{\n{1}return new {0}[size];\n        }}".format(
-            class_name, "    " * (self.tablevel + 1)))
+        self.printtab("public {0}[] newArray(int size) {{\n{1}return new {0}[size];\n        }}".format(class_name, "    " * (self.tablevel + 1)))
         self.newline()
         self.printtab("public %s createFromParcel(Parcel source) {" % class_name)
         self.uptab()
@@ -291,7 +300,7 @@ class ParcelGen:
             implements += ", Serializable"
         extends = ""
         if self.extends_class:
-                extends += " extends " + self.extends_class
+            extends += " extends " + self.extends_class
         self.printtab((self.CLASS_STR % (class_name, extends, implements)) + "\n")
 
         # Protected member variables
@@ -322,11 +331,11 @@ class ParcelGen:
         self.printtab("super();")
         self.downtab()
         self.printtab("}\n")
-        
+
         # Equals / Hashcode methods
         self.output(self.build_equals(class_name))
         self.output(self.build_hash_code(class_name))
-    
+
         # Getters for member variables
         for typ, member in self.member_map():
             self.output(self.gen_getter(typ, member))
@@ -387,7 +396,7 @@ class ParcelGen:
                         self.printtab("%s = source.readParcelable(%s.class.getClassLoader());" % (memberized, typ))
         self.tablevel -= 1
         self.printtab("}\n")
-#       self.print_creator(class_name, "Parcelable.Creator")
+        # self.print_creator(class_name, "Parcelable.Creator")
 
         if self.do_json:
             self.output(self.generate_json_reader(props))
@@ -560,9 +569,9 @@ class ParcelGen:
                         else:
                             fun += self.tabify("array.put(temp);\n")
                     elif cur_type == "Date":
-                            fun += self.tabify("array.put(\"%s\", %s.getTime() / 1000);\n" % (cur_type, self.memberize(member)))
+                        fun += self.tabify("array.put(\"%s\", %s.getTime() / 1000);\n" % (cur_type, self.memberize(member)))
                     elif cur_type == "Uri":
-                            fun += self.tabify("array.put(\"%s\", String.valueOf(%s));\n" % (cur_type, self.memberize(member)))
+                        fun += self.tabify("array.put(\"%s\", String.valueOf(%s));\n" % (cur_type, self.memberize(member)))
                     else:
                         fun += self.tabify("array.put(temp.writeJSON());\n")
                     self.downtab()
@@ -599,7 +608,7 @@ class ParcelGen:
         self.downtab()
         fun += self.tabify("}\n")
         return fun
-        
+
     def build_equals(self, class_name):
         """ Standard equals implementation as noted at:
             https://commons.apache.org/proper/commons-lang/javadocs/api-3.1/org/apache/commons/lang3/builder/EqualsBuilder.html
@@ -622,7 +631,7 @@ class ParcelGen:
         output += self.tabify("return false;\n")
         self.downtab()
         output += self.tabify("}\n\n")
-        output += self.tabify("%s that = (%s) object;\n\n" %(class_name, class_name))
+        output += self.tabify("%s that = (%s) object;\n\n" % (class_name, class_name))
         output += self.tabify("return new EqualsBuilder()\n")
         self.uptab()
         self.uptab()
@@ -635,9 +644,9 @@ class ParcelGen:
         self.downtab()
         self.downtab()
         output += self.tabify("}\n")
-        
+
         return output
-        
+
     def build_hash_code(self, class_name):
         output = self.tabify("@Override\n")
         output += self.tabify("public int hashCode() {\n")
@@ -653,10 +662,9 @@ class ParcelGen:
         self.downtab()
         self.downtab()
         output += self.tabify("}\n")
-        
+
         return output
-    
-        
+
     def write_enum(self, enum):
         enum_name = first_upper(enum.keys()[0])
         self.printtab("public enum %s {" % (enum_name))
@@ -688,21 +696,25 @@ class ParcelGen:
         self.downtab()
         self.printtab("}\n")
 
+
 def camel_to_under(member):
     """Convert NamesInCamelCase to jsonic_underscore_names"""
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', member)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
 
 def under_to_camel(member):
     """Convert jsonic_underscore_names to NamesInCamelCase"""
     components = member.split('_')
     return "".join(component.title() for component in components)
 
+
 def first_lower(string):
-   if not string:
-      return string
-   else:
-      return string[0].lower() + string[1:]
+    if not string:
+        return string
+    else:
+        return string[0].lower() + string[1:]
+
 
 def first_upper(string):
     if len(string) == 0:
@@ -710,9 +722,11 @@ def first_upper(string):
     else:
         return string[0].upper() + string[1:]
 
+
 def generate_class(filePath, output):
     # Read parcelable description json
-    description = json.load(open(filePath, 'r'))
+    with open(filePath, 'r') as f:
+        description = json.load(f)
     props = description.get("props") or {}
     package = description.get("package") or None
     extends_class = description.get("extends") or None
@@ -738,13 +752,13 @@ def generate_class(filePath, output):
     generator.do_json_writer = do_json_writer
     generator.make_serializable = make_serializable
     generator.extends_class = extends_class
-    
+
     # We treat enums differently so pull them out of the props dictionary.
     enums = []
     if ParcelGen.ENUM_TYPE in props:
         enums = props[ParcelGen.ENUM_TYPE]
-        del(props[ParcelGen.ENUM_TYPE])
-    
+        del props[ParcelGen.ENUM_TYPE]
+
     # Add the enums back to properties as their own data type.
     for enum in enums:
         enum_member = enum.keys()[0]
@@ -755,7 +769,7 @@ def generate_class(filePath, output):
 
     generator.default_values = default_values
     if output:
-        if (os.path.isdir(output)): # Resolve file location based on package + path
+        if os.path.isdir(output):  # Resolve file location based on package + path
             dirs = package.split(".")
             dirs.append(class_name + ".java")
             targetFile = os.path.join(output, *dirs)
@@ -772,29 +786,31 @@ def generate_class(filePath, output):
     generator.print_gen(props, class_name, package, imports, transient, enums)
 
 
-if __name__ == "__main__":
-    usage = """USAGE: %s parcelfile [destination]
+def main(argv=None):
+    parser = ArgumentParser(
+        description="""
+            Generates a parcelable Java implementation for provided description file.
+            Writes to stdout unless destination is specified.
 
-Generates a parcelable Java implementation for provided description file.
-Writes to stdout unless destination is specified.
-
-If destination is a directory, it is assumed to be the top level
-directory of your Java source. Your class file will be written in the
-appropriate folder based on its Java package.
-If destination is a file, your class will be written to that file."""
-    if len(sys.argv) < 2:
-        print(usage % sys.argv[0])
-        exit(0)
-    destination = None
-    if len(sys.argv) > 2:
-        destination = sys.argv[2]
-    source = sys.argv[1]
-    # If both source and destination are directories, run in
-    # fake make mode
-    if (os.path.isdir(source) and os.path.isdir(destination)):
-        for sourcefile in [sourcefile for sourcefile in os.listdir(source) if sourcefile.endswith(".json")]:
+            If destination is a directory, it is assumed to be the top level
+            directory of your Java source. Your class file will be written in the
+            appropriate folder based on its Java package.
+            If destination is a file, your class will be written to that file.
+        """,
+    )
+    parser.add_argument("parcelfile")
+    parser.add_argument("destination", nargs='?')
+    args = parser.parse_args(argv)
+    source = args.parcelfile
+    destination = args.destination
+    if os.path.isdir(source) and os.path.isdir(destination):
+        for sourcefile in iglob(os.path.join(source, '*.json')):
             print "decoding ", sourcefile
-            generate_class(os.path.join(source, sourcefile), destination)
+            generate_class(sourcefile, destination)
     else:
-        generate_class(sys.argv[1], destination)
+        generate_class(source, destination)
+    return 0
 
+
+if __name__ == "__main__":
+    exit(main(sys.argv))
