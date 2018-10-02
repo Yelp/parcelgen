@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
     name='parcelgen',
-    version='1.0.2',
+    version='1.0.3',
     license='Apache Software License',
     description='Library for simplifying generation of Android objects to share between activities',
     long_description=open(os.path.join(os.path.dirname(__file__), 'README.md')).read(),
