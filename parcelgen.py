@@ -786,7 +786,7 @@ def generate_class(filePath, output):
     generator.print_gen(props, class_name, package, imports, transient, enums)
 
 
-def main(argv=None):
+def main():
     parser = ArgumentParser(
         description="""
             Generates a parcelable Java implementation for provided description file.
@@ -800,7 +800,7 @@ def main(argv=None):
     )
     parser.add_argument("parcelfile")
     parser.add_argument("destination", nargs='?')
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     source = args.parcelfile
     destination = args.destination
     if os.path.isdir(source) and os.path.isdir(destination):
@@ -813,4 +813,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    exit(main(sys.argv))
+    exit(main())
