@@ -9,3 +9,5 @@ build
 *.tox
 .idea/
 .cache/
+*.iml
+**/*.iml
