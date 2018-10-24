@@ -782,7 +782,9 @@ def generate_class(filePath, output):
                 if not os.path.exists(child_file):
                     generator.outfile = open(child_file, 'w')
                     generator.print_child(child, package, enums)
-        generator.outfile = open(targetFile, 'w')
+            generator.outfile = open(targetFile, 'w')
+        else:
+            print('Error: output directory does not exist: {}'.format(output))
     generator.print_gen(props, class_name, package, imports, transient, enums)
 
 
