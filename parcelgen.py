@@ -8,7 +8,6 @@ writeToParcel and readFromParcel methods.
 Primary Author: Alex Pretzlav <pretz@yelp.com>
 """
 
-import sys
 import re
 import os.path
 import json
@@ -354,7 +353,6 @@ class ParcelGen(object):
         self.printtab("public void readFromParcel(Parcel source) {")
         self.tablevel += 1
         i = 0
-        all_members = []
         for typ in self.get_types():
             if typ == "boolean":
                 self.printtab("boolean[] bools = source.createBooleanArray();")
@@ -587,7 +585,7 @@ class ParcelGen(object):
                     else:
                         fun += self.tabify("object.put(key, value.writeJSON());\n")
                     self.downtab()
-                    fun += self.tabify("}\n");
+                    fun += self.tabify("}\n")
                     fun += self.tabify("json.put(\"%s\", object);\n" % key)
                 elif typ in self.NAN_TYPES:
                     fun += self.tabify("if (!Double.isNaN(%s)) {\n" % self.memberize(member))
