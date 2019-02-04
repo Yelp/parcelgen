@@ -1,7 +1,12 @@
 Parcelgen
 =========
 
-Parcelgen simplifies the process of building objects from JSON descriptions and passing those objects between Android Activities. Parcelgen is no longer under active development by Yelp, and is considered deprecated.
+Parcelgen simplifies the process of building objects from JSON descriptions and passing those objects between Android Activities. 
+
+DEPRECATED
+-----
+
+Parcelgen is no longer under active development by Yelp and is considered deprecated. As a replacement we advice to use [swagger-gradle-codegen](https://github.com/Yelp/swagger-gradle-codegen).
 
 What?
 -----
