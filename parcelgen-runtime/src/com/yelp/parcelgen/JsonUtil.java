@@ -2,7 +2,7 @@ package com.yelp.parcelgen;
 
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.support.v4.util.ArrayMap;
+import androidx.collection.ArrayMap;
 
 import org.json.JSONArray;
 import org.json.JSONException;
