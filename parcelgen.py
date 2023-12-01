@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Parcelgen generates parcelable Java classes based
 on a json dictionary of types and properties.  It generates
@@ -16,7 +16,7 @@ from argparse import ArgumentParser
 from glob import iglob
 
 
-class ParcelGen(object):
+class ParcelGen:
     BASE_IMPORTS = (
         "android.os.Parcel",
         "android.os.Parcelable",
@@ -48,7 +48,7 @@ class ParcelGen(object):
         if self.outfile:
             self.outfile.write(string + "\n")
         else:
-            print string
+            print(string)
 
     def uptab(self):
         self.tablevel += 1
@@ -57,7 +57,7 @@ class ParcelGen(object):
         self.tablevel -= 1
 
     def memberize(self, name):
-        return "m%s%s" % (name[0].capitalize(), name[1:])
+        return "m{}{}".format(name[0].capitalize(), name[1:])
 
     def member_map(self):
         for typ in self.get_types():
@@ -69,8 +69,8 @@ class ParcelGen(object):
         if typ == "boolean" and (member.startswith("is") or member.startswith("has")):
             method_name = member
         else:
-            method_name = "get%s%s" % (member[0].capitalize(), member[1:])
-        return "    public %s %s() {\n         return %s;\n    }" % (typ, method_name, self.memberize(member))
+            method_name = "get{}{}".format(member[0].capitalize(), member[1:])
+        return "    public {} {}() {{\n         return {};\n    }}".format(typ, method_name, self.memberize(member))
 
     def list_type(self, typ):
         match = re.match(r"(List|ArrayList)<(.*)>", typ)
@@ -107,14 +107,14 @@ class ParcelGen(object):
         if classname == "String":
             return self.tabify("%s = source.createStringArrayList();" % memberized)
         else:
-            return self.tabify("%s = source.readArrayList(%s.class.getClassLoader());" % (memberized, classname))
+            return self.tabify("{} = source.readArrayList({}.class.getClassLoader());".format(memberized, classname))
 
     def gen_array_parcelable(self, typ, memberized):
         classname = self.array_type(typ)
         if not classname:
             return None
         elif classname in self.NATIVE_TYPES:
-            return self.tabify("parcel.write%sArray(%s);" % (classname.capitalize(), memberized))
+            return self.tabify("parcel.write{}Array({});".format(classname.capitalize(), memberized))
         elif classname in self.BOX_TYPES:
             return self.tabify("parcel.writeArray(%s);" % (memberized))
         else:
@@ -125,18 +125,18 @@ class ParcelGen(object):
         if not classname:
             return None
         elif classname in self.NATIVE_TYPES:
-            assignment = self.tabify("%s = source.create%sArray();\n" % (memberized, classname.capitalize()))
+            assignment = self.tabify("{} = source.create{}Array();\n".format(memberized, classname.capitalize()))
             return assignment
         elif classname in self.BOX_TYPES:
-            assignment = self.tabify("Object[] %sObjArray = source.readArray(%s.class.getClassLoader());\n" % (memberized, classname))
+            assignment = self.tabify("Object[] {}ObjArray = source.readArray({}.class.getClassLoader());\n".format(memberized, classname))
             assignment += self.tabify("if (%sObjArray != null) {\n" % (memberized))
             self.uptab()
-            assignment += self.tabify("%s = Arrays.copyOf(%sObjArray, %sObjArray.length, %s[].class);\n" % (memberized, memberized, memberized, classname))
+            assignment += self.tabify("{} = Arrays.copyOf({}ObjArray, {}ObjArray.length, {}[].class);\n".format(memberized, memberized, memberized, classname))
             self.downtab()
             assignment += self.tabify("}\n")
             return assignment
         else:
-            assignment = self.tabify("%s = source.createTypedArray(%s.CREATOR);\n" % (memberized, classname))
+            assignment = self.tabify("{} = source.createTypedArray({}.CREATOR);\n".format(memberized, classname))
             return assignment
 
     def gen_parcelable_line(self, typ, member):
@@ -144,9 +144,9 @@ class ParcelGen(object):
         if typ in self.BOX_TYPES:
             return self.tabify("parcel.writeValue(%s);" % (memberized))
         elif typ.lower() in self.NATIVE_TYPES:
-            return self.tabify("parcel.write%s(%s);" % (typ.capitalize(), memberized))
+            return self.tabify("parcel.write{}({});".format(typ.capitalize(), memberized))
         elif typ == "Date":
-            return self.tabify("parcel.writeLong(%s == null ? Integer.MIN_VALUE : %s.getTime());" % (
+            return self.tabify("parcel.writeLong({} == null ? Integer.MIN_VALUE : {}.getTime());".format(
                 memberized, memberized))
         elif self.array_type(typ):
             return self.gen_array_parcelable(typ, memberized)
@@ -166,7 +166,7 @@ class ParcelGen(object):
             return self.tabify("parcel.writeParcelable(%s, 0);" % memberized)
 
     def get_types(self):
-        types = self.props.keys()
+        types = list(self.props.keys())
         types.sort()
         return types
 
@@ -239,13 +239,13 @@ class ParcelGen(object):
             return True
         if "Date" in self.props:
             return True
-        for key in self.props.keys():
+        for key in list(self.props.keys()):
             if "List" in key or "Map" in key:
                 return True
         return False
 
     def needs_jsonarray(self):
-        for prop in self.props.keys():
+        for prop in list(self.props.keys()):
             if prop.startswith("List"):
                 return True
             if "[]" in prop:
@@ -258,8 +258,8 @@ class ParcelGen(object):
         self.printtab("package %s;\n" % package)
         imports = set(tuple(imports) + self.BASE_IMPORTS)
         for enum in enums:
-            imports.add("%s.%s.%s" % (package, class_name[1:], first_upper(enum.keys()[0])))
-        for prop in props.keys():
+            imports.add("{}.{}.{}".format(package, class_name[1:], first_upper(list(enum.keys())[0])))
+        for prop in list(props.keys()):
             if prop.startswith("List"):
                 imports.add("java.util.List")
             elif prop.startswith("ArrayList"):
@@ -307,20 +307,20 @@ class ParcelGen(object):
         for typ, member in self.member_map():
             if member in transient:
                 typ = "transient " + typ
-            self.printtab("protected %s %s;" % (typ, self.memberize(member)))
+            self.printtab("protected {} {};".format(typ, self.memberize(member)))
         self.output("")
 
         # Parameterized Constructor
         constructor = "protected %s(" % class_name
         params = []
         for typ, member in self.member_map():
-            params.append("%s %s" % (typ, member))
+            params.append("{} {}".format(typ, member))
         constructor += "%s) {" % ", ".join(params)
         self.printtab(constructor)
         self.uptab()
         self.printtab("this();")
         for typ, member in self.member_map():
-            self.printtab("%s = %s;" % (self.memberize(member), member))
+            self.printtab("{} = {};".format(self.memberize(member), member))
         self.tablevel -= 1
         self.printtab("}\n")
 
@@ -356,7 +356,7 @@ class ParcelGen(object):
         for typ in self.get_types():
             if typ == "boolean":
                 self.printtab("boolean[] bools = source.createBooleanArray();")
-                for j in xrange(len(props[typ])):
+                for j in range(len(props[typ])):
                     self.printtab("%s = bools[%d];" % (self.memberize(props[typ][j]), j))
             else:
                 for member in props[typ]:
@@ -370,12 +370,12 @@ class ParcelGen(object):
                         self.output(array_gen)
                     elif map_type:
                         if map_type[1] in self.BOX_TYPES:
-                            self.printtab("%s = source.readHashMap(%s.class.getClassLoader());" % (memberized, map_type[1]))
+                            self.printtab("{} = source.readHashMap({}.class.getClassLoader());".format(memberized, map_type[1]))
                         elif self.map_type(map_type[1]):
                             sub_map_type = self.map_type(map_type[1])
-                            self.printtab("%s = JsonUtil.fromBundleTwoLevel(source.readBundle(getClass().getClassLoader()), %s.class);" % (memberized, sub_map_type[1]))
+                            self.printtab("{} = JsonUtil.fromBundleTwoLevel(source.readBundle(getClass().getClassLoader()), {}.class);".format(memberized, sub_map_type[1]))
                         else:
-                            self.printtab("%s = JsonUtil.fromBundle(source.readBundle(getClass().getClassLoader()), %s.class);" % (memberized, map_type[1]))
+                            self.printtab("{} = JsonUtil.fromBundle(source.readBundle(getClass().getClassLoader()), {}.class);".format(memberized, map_type[1]))
                     elif typ == "Date":
                         self.printtab("long date%d = source.readLong();" % i)
                         self.printtab("if (date%d != Integer.MIN_VALUE) {" % i)
@@ -385,13 +385,13 @@ class ParcelGen(object):
                         self.printtab("}")
                         i += 1
                     elif typ in self.BOX_TYPES:
-                        self.printtab("%s = (%s) source.readValue(%s.class.getClassLoader());" % (memberized, typ.capitalize(), typ.capitalize()))
+                        self.printtab("{} = ({}) source.readValue({}.class.getClassLoader());".format(memberized, typ.capitalize(), typ.capitalize()))
                     elif typ.lower() in self.NATIVE_TYPES:
-                        self.printtab("%s = source.read%s();" % (memberized, typ.capitalize()))
+                        self.printtab("{} = source.read{}();".format(memberized, typ.capitalize()))
                     elif typ in self.serializables:
-                        self.printtab("%s = (%s)source.readSerializable();" % (memberized, typ))
+                        self.printtab("{} = ({})source.readSerializable();".format(memberized, typ))
                     else:
-                        self.printtab("%s = source.readParcelable(%s.class.getClassLoader());" % (memberized, typ))
+                        self.printtab("{} = source.readParcelable({}.class.getClassLoader());".format(memberized, typ))
         self.tablevel -= 1
         self.printtab("}\n")
         # self.print_creator(class_name, "Parcelable.Creator")
@@ -431,70 +431,70 @@ class ParcelGen(object):
                     fun += self.tabify("if (!json.isNull(\"%s\")) {\n" % key)
                     self.uptab()
                 if typ in self.enum_types:
-                    fun += self.tabify("%s = %s.fromApiString(json.optString(\"%s\"));\n" % (self.memberize(member), first_upper(member), key))
+                    fun += self.tabify("{} = {}.fromApiString(json.optString(\"{}\"));\n".format(self.memberize(member), first_upper(member), key))
                 elif typ == "Date":
-                    fun += self.tabify("%s = JsonUtil.parseTimestamp(json, \"%s\");\n" % (self.memberize(member), key))
+                    fun += self.tabify("{} = JsonUtil.parseTimestamp(json, \"{}\");\n".format(self.memberize(member), key))
                 elif typ == "Uri":
-                    fun += self.tabify("%s = Uri.parse(json.getString(\"%s\"));\n" % (self.memberize(member), key))
+                    fun += self.tabify("{} = Uri.parse(json.getString(\"{}\"));\n".format(self.memberize(member), key))
                 elif array_type:
                     classname = self.array_type(typ)
                     memberized = self.memberize(member)
                     fun += self.tabify("JSONArray jsonArray = json.getJSONArray(\"%s\");\n" % key)
                     fun += self.tabify("int arrayLen = jsonArray.length();\n")
-                    fun += self.tabify("%s = new %s[arrayLen];\n" % (memberized, classname))
+                    fun += self.tabify("{} = new {}[arrayLen];\n".format(memberized, classname))
                     fun += self.tabify("for (int i = 0; i < arrayLen; i++) {\n")
                     self.uptab()
                     if classname in self.NATIVE_TYPES:
-                        fun += self.tabify("%s[i] = jsonArray.get%s(i);\n" % (memberized, classname.capitalize()))
+                        fun += self.tabify("{}[i] = jsonArray.get{}(i);\n".format(memberized, classname.capitalize()))
                     elif classname in self.BOX_TYPES:
                         # JsonParser calls Integers Ints
                         if classname == "Integer":
                             fun += self.tabify("%s[i] = jsonArray.getInt(i);\n" % (memberized))
                         else:
-                            fun += self.tabify("%s[i] = jsonArray.get%s(i);\n" % (memberized, classname.capitalize()))
+                            fun += self.tabify("{}[i] = jsonArray.get{}(i);\n".format(memberized, classname.capitalize()))
                     else:
-                        fun += self.tabify("%s[i] = %s.CREATOR.parse(jsonArray.getJSONObject(i));\n" % (memberized, classname))
+                        fun += self.tabify("{}[i] = {}.CREATOR.parse(jsonArray.getJSONObject(i));\n".format(memberized, classname))
                     self.downtab()
                     fun += self.tabify("}\n")
                 elif list_type:
                     if list_type == "Boolean":
-                        fun += self.tabify("%s = JsonUtil.parseBooleanJsonList(json.optJSONArray(\"%s\"));\n" % (self.memberize(member), key))
+                        fun += self.tabify("{} = JsonUtil.parseBooleanJsonList(json.optJSONArray(\"{}\"));\n".format(self.memberize(member), key))
                     elif list_type == "Double":
-                        fun += self.tabify("%s = JsonUtil.parseDoubleJsonList(json.optJSONArray(\"%s\"));\n" % (self.memberize(member), key))
+                        fun += self.tabify("{} = JsonUtil.parseDoubleJsonList(json.optJSONArray(\"{}\"));\n".format(self.memberize(member), key))
                     elif list_type == "Integer":
-                        fun += self.tabify("%s = JsonUtil.parseIntegerJsonList(json.optJSONArray(\"%s\"));\n" % (self.memberize(member), key))
+                        fun += self.tabify("{} = JsonUtil.parseIntegerJsonList(json.optJSONArray(\"{}\"));\n".format(self.memberize(member), key))
                     elif list_type == "Long":
-                        fun += self.tabify("%s = JsonUtil.parseLongJsonList(json.optJSONArray(\"%s\"));\n" % (self.memberize(member), key))
+                        fun += self.tabify("{} = JsonUtil.parseLongJsonList(json.optJSONArray(\"{}\"));\n".format(self.memberize(member), key))
                     elif list_type == "String":
-                        fun += self.tabify("%s = JsonUtil.getStringList(json.optJSONArray(\"%s\"));\n" % (self.memberize(member), key))
+                        fun += self.tabify("{} = JsonUtil.getStringList(json.optJSONArray(\"{}\"));\n".format(self.memberize(member), key))
                     else:
-                        fun += self.tabify("%s = JsonUtil.parseJsonList(json.optJSONArray(\"%s\"), %s.CREATOR);\n" % (self.memberize(member), key, list_type))
+                        fun += self.tabify("{} = JsonUtil.parseJsonList(json.optJSONArray(\"{}\"), {}.CREATOR);\n".format(self.memberize(member), key, list_type))
                 elif map_type:
                     if map_type[1] == "Boolean":
-                        fun += self.tabify("%s = JsonUtil.parseBooleanJsonMap(json.getJSONObject(\"%s\"));\n" % (self.memberize(member), key))
+                        fun += self.tabify("{} = JsonUtil.parseBooleanJsonMap(json.getJSONObject(\"{}\"));\n".format(self.memberize(member), key))
                     elif map_type[1] == "Double":
-                        fun += self.tabify("%s = JsonUtil.parseDoubleJsonMap(json.getJSONObject(\"%s\"));\n" % (self.memberize(member), key))
+                        fun += self.tabify("{} = JsonUtil.parseDoubleJsonMap(json.getJSONObject(\"{}\"));\n".format(self.memberize(member), key))
                     elif map_type[1] == "Integer":
-                        fun += self.tabify("%s = JsonUtil.parseIntegerJsonMap(json.getJSONObject(\"%s\"));\n" % (self.memberize(member), key))
+                        fun += self.tabify("{} = JsonUtil.parseIntegerJsonMap(json.getJSONObject(\"{}\"));\n".format(self.memberize(member), key))
                     elif map_type[1] == "Long":
-                        fun += self.tabify("%s = JsonUtil.parseLongJsonMap(json.getJSONObject(\"%s\"));\n" % (self.memberize(member), key))
+                        fun += self.tabify("{} = JsonUtil.parseLongJsonMap(json.getJSONObject(\"{}\"));\n".format(self.memberize(member), key))
                     elif map_type[1] == "String":
-                        fun += self.tabify("%s = JsonUtil.parseStringJsonMap(json.getJSONObject(\"%s\"));\n" % (self.memberize(member), key))
+                        fun += self.tabify("{} = JsonUtil.parseStringJsonMap(json.getJSONObject(\"{}\"));\n".format(self.memberize(member), key))
                     elif self.map_type(map_type[1]):
                         sub_map_type = self.map_type(map_type[1])
-                        fun += self.tabify("%s = JsonUtil.parseTwoLevelJsonMap(json.getJSONObject(\"%s\"), %s.CREATOR);\n" % (self.memberize(member), key, sub_map_type[1]))
+                        fun += self.tabify("{} = JsonUtil.parseTwoLevelJsonMap(json.getJSONObject(\"{}\"), {}.CREATOR);\n".format(self.memberize(member), key, sub_map_type[1]))
                     else:
-                        fun += self.tabify("%s = JsonUtil.parseJsonMap(json.getJSONObject(\"%s\"), %s.CREATOR);\n" % (self.memberize(member), key, map_type[1]))
+                        fun += self.tabify("{} = JsonUtil.parseJsonMap(json.getJSONObject(\"{}\"), {}.CREATOR);\n".format(self.memberize(member), key, map_type[1]))
                 elif typ in self.NATIVE_TYPES:
-                    fun += self.tabify("%s = json.opt%s(\"%s\");\n" % (self.memberize(member), typ.capitalize(), key))
+                    fun += self.tabify("{} = json.opt{}(\"{}\");\n".format(self.memberize(member), typ.capitalize(), key))
                 elif typ in self.BOX_TYPES:
                     # Integer has different naming in the json parser
                     if typ == "Integer":
-                        fun += self.tabify("%s = json.optInt(\"%s\");\n" % (self.memberize(member), key))
+                        fun += self.tabify("{} = json.optInt(\"{}\");\n".format(self.memberize(member), key))
                     else:
-                        fun += self.tabify("%s = json.opt%s(\"%s\");\n" % (self.memberize(member), typ.capitalize(), key))
+                        fun += self.tabify("{} = json.opt{}(\"{}\");\n".format(self.memberize(member), typ.capitalize(), key))
                 else:
-                    fun += self.tabify("%s = %s.CREATOR.parse(json.getJSONObject(\"%s\"));\n" % (self.memberize(member), typ, key))
+                    fun += self.tabify("{} = {}.CREATOR.parse(json.getJSONObject(\"{}\"));\n".format(self.memberize(member), typ, key))
                 if protect:
                     self.downtab()
                     listmatcher = re.match(r"(?P<list_type>Array)?List(?P<content_type>[<>a-zA-Z0-9_]*)", typ)
@@ -502,9 +502,9 @@ class ParcelGen(object):
                         match_dict = listmatcher.groupdict()
                         fun += self.tabify("} else {\n")
                         self.uptab()
-                        fun += self.tabify(("%s = " % self.memberize(member)))
+                        fun += self.tabify("%s = " % self.memberize(member))
                         if match_dict['list_type'] is not None and match_dict['content_type'] is not None:
-                            fun += ("new %sList%s()" % (match_dict['list_type'], match_dict['content_type']))
+                            fun += ("new {}List{}()".format(match_dict['list_type'], match_dict['content_type']))
                         else:
                             fun += "java.util.Collections.emptyList()"
                         fun += ";\n"
@@ -512,7 +512,7 @@ class ParcelGen(object):
                     elif member in self.default_values:
                         fun += self.tabify("} else {\n")
                         self.uptab()
-                        fun += self.tabify(("%s = %s;\n" % (self.memberize(member), self.default_values[member])))
+                        fun += self.tabify("{} = {};\n".format(self.memberize(member), self.default_values[member]))
                         self.downtab()
                     fun += self.tabify("}\n")
         self.downtab()
@@ -544,16 +544,16 @@ class ParcelGen(object):
                     fun += self.tabify("if (%s != null) {\n" % self.memberize(member))
                     self.uptab()
                 if typ == "Date":
-                    fun += self.tabify("json.put(\"%s\", %s.getTime() / 1000);\n" % (key, self.memberize(member)))
+                    fun += self.tabify("json.put(\"{}\", {}.getTime() / 1000);\n".format(key, self.memberize(member)))
                 elif typ in self.enum_types:
                     self.uptab()
-                    fun += self.tabify("json.put(\"%s\", %s.apiString);\n" % (key, self.memberize(member)))
+                    fun += self.tabify("json.put(\"{}\", {}.apiString);\n".format(key, self.memberize(member)))
                 elif typ == "Uri":
-                    fun += self.tabify("json.put(\"%s\", String.valueOf(%s));\n" % (key, self.memberize(member)))
+                    fun += self.tabify("json.put(\"{}\", String.valueOf({}));\n".format(key, self.memberize(member)))
                 elif list_type or array_type:
                     fun += self.tabify("JSONArray array = new JSONArray();\n")
                     cur_type = array_type if array_type else list_type
-                    fun += self.tabify("for (%s temp : %s) {\n" % (cur_type, self.memberize(member)))
+                    fun += self.tabify("for ({} temp : {}) {{\n".format(cur_type, self.memberize(member)))
                     self.uptab()
                     if cur_type in self.BOX_TYPES:
                         if cur_type == "Byte":
@@ -567,9 +567,9 @@ class ParcelGen(object):
                         else:
                             fun += self.tabify("array.put(temp);\n")
                     elif cur_type == "Date":
-                        fun += self.tabify("array.put(\"%s\", %s.getTime() / 1000);\n" % (cur_type, self.memberize(member)))
+                        fun += self.tabify("array.put(\"{}\", {}.getTime() / 1000);\n".format(cur_type, self.memberize(member)))
                     elif cur_type == "Uri":
-                        fun += self.tabify("array.put(\"%s\", String.valueOf(%s));\n" % (cur_type, self.memberize(member)))
+                        fun += self.tabify("array.put(\"{}\", String.valueOf({}));\n".format(cur_type, self.memberize(member)))
                     else:
                         fun += self.tabify("array.put(temp.writeJSON());\n")
                     self.downtab()
@@ -579,7 +579,7 @@ class ParcelGen(object):
                     fun += self.tabify("JSONObject object = new JSONObject();\n")
                     fun += self.tabify("for (String key : %s.keySet()) {\n" % self.memberize(member))
                     self.uptab()
-                    fun += self.tabify("%s value = %s.get(key);\n" % (map_type[1], self.memberize(member)))
+                    fun += self.tabify("{} value = {}.get(key);\n".format(map_type[1], self.memberize(member)))
                     if map_type[1] in self.BOX_TYPES:
                         fun += self.tabify("object.put(key, value);\n")
                     else:
@@ -590,15 +590,15 @@ class ParcelGen(object):
                 elif typ in self.NAN_TYPES:
                     fun += self.tabify("if (!Double.isNaN(%s)) {\n" % self.memberize(member))
                     self.uptab()
-                    fun += self.tabify("json.put(\"%s\", %s);\n" % (key, self.memberize(member)))
+                    fun += self.tabify("json.put(\"{}\", {});\n".format(key, self.memberize(member)))
                     self.downtab()
                     fun += self.tabify("}\n")
                 elif typ in self.NATIVE_TYPES:
-                    fun += self.tabify("json.put(\"%s\", %s);\n" % (key, self.memberize(member)))
+                    fun += self.tabify("json.put(\"{}\", {});\n".format(key, self.memberize(member)))
                 elif typ in self.BOX_TYPES:
-                    fun += self.tabify("json.put(\"%s\", %s);\n" % (key, self.memberize(member)))
+                    fun += self.tabify("json.put(\"{}\", {});\n".format(key, self.memberize(member)))
                 else:
-                    fun += self.tabify("json.put(\"%s\", %s.writeJSON());\n" % (key, self.memberize(member)))
+                    fun += self.tabify("json.put(\"{}\", {}.writeJSON());\n".format(key, self.memberize(member)))
                 if protect:
                     self.downtab()
                     fun += self.tabify("}\n")
@@ -629,14 +629,14 @@ class ParcelGen(object):
         output += self.tabify("return false;\n")
         self.downtab()
         output += self.tabify("}\n\n")
-        output += self.tabify("%s that = (%s) object;\n\n" % (class_name, class_name))
+        output += self.tabify("{} that = ({}) object;\n\n".format(class_name, class_name))
         output += self.tabify("return new EqualsBuilder()\n")
         self.uptab()
         self.uptab()
         for data_type in self.get_types():
             for member in self.props[data_type]:
                 memberized_member = self.memberize(member)
-                output += self.tabify(".append(this.%s, that.%s)\n" % (memberized_member, memberized_member))
+                output += self.tabify(".append(this.{}, that.{})\n".format(memberized_member, memberized_member))
         output += self.tabify(".isEquals();\n")
         self.downtab()
         self.downtab()
@@ -664,13 +664,13 @@ class ParcelGen(object):
         return output
 
     def write_enum(self, enum):
-        enum_name = first_upper(enum.keys()[0])
+        enum_name = first_upper(list(enum.keys())[0])
         self.printtab("public enum %s {" % (enum_name))
         self.uptab()
-        for value in enum.values()[0][:-1]:
-            self.printtab("%s(\"%s\")," % (value.upper(), value))
-        last_element = enum.values()[0][-1]
-        self.printtab("%s(\"%s\");\n" % (last_element.upper(), last_element))
+        for value in list(enum.values())[0][:-1]:
+            self.printtab("{}(\"{}\"),".format(value.upper(), value))
+        last_element = list(enum.values())[0][-1]
+        self.printtab("{}(\"{}\");\n".format(last_element.upper(), last_element))
         self.printtab("public String apiString;\n")
         self.printtab("private %s(String apiString) {" % (enum_name))
         self.uptab()
@@ -679,7 +679,7 @@ class ParcelGen(object):
         self.printtab("}\n")
         self.printtab("public static %s fromApiString(String apiString) {" % (enum_name))
         self.uptab()
-        self.printtab("for (%s %s : %s.values()) {" % (enum_name, first_lower(enum_name), enum_name))
+        self.printtab("for ({} {} : {}.values()) {{".format(enum_name, first_lower(enum_name), enum_name))
         self.uptab()
         self.printtab("if (%s.apiString.equals(apiString)) {" % (first_lower(enum_name)))
         self.uptab()
@@ -723,7 +723,7 @@ def first_upper(string):
 
 def generate_class(filePath, output):
     # Read parcelable description json
-    with open(filePath, 'r') as f:
+    with open(filePath) as f:
         description = json.load(f)
     props = description.get("props") or {}
     package = description.get("package") or None
@@ -759,7 +759,7 @@ def generate_class(filePath, output):
 
     # Add the enums back to properties as their own data type.
     for enum in enums:
-        enum_member = enum.keys()[0]
+        enum_member = list(enum.keys())[0]
         enum_type = first_upper(enum_member)
         serializables.append(enum_type)
         props[enum_type] = [enum_member]
@@ -782,7 +782,7 @@ def generate_class(filePath, output):
                     generator.print_child(child, package, enums)
             generator.outfile = open(targetFile, 'w')
         else:
-            print('Error: output directory does not exist: {}'.format(output))
+            print(f'Error: output directory does not exist: {output}')
     generator.print_gen(props, class_name, package, imports, transient, enums)
 
 
@@ -805,7 +805,7 @@ def main():
     destination = args.destination
     if os.path.isdir(source) and os.path.isdir(destination):
         for sourcefile in iglob(os.path.join(source, '*.json')):
-            print "decoding ", sourcefile
+            print("decoding ", sourcefile)
             generate_class(sourcefile, destination)
     else:
         generate_class(source, destination)
